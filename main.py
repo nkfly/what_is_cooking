@@ -30,20 +30,22 @@ def cosineSimilarity(vec1, vec2):
 
 	
 
-
+# load train data
 with open('train.json') as data_file:
 	trainData = json.load(data_file)
 
 
-ingredient2documentCount = {}
-ingredient2id = {}
+
+ingredient2documentCount = {} # this is prepared to calculate inverted document frequency
+
+ingredient2id = {} # gives ingredient an id
 
 for i in xrange(len(trainData)):
 	food = trainData[i]
 
 	for j in xrange(len(food['ingredients'])):
 		if food['ingredients'][j] not in ingredient2id:
-			ingredient2id[food['ingredients'][j]] = len(ingredient2id)
+			ingredient2id[food['ingredients'][j]] = len(ingredient2id) # just give id
 
 		if food['ingredients'][j] not in ingredient2documentCount:
 			ingredient2documentCount[food['ingredients'][j]] = 1
@@ -59,8 +61,8 @@ for ingredient in ingredient2documentCount:
 
 
 
-id2vector = {}
-id2cuisine = {}
+id2vector = {} # the trainId to vector, the dimension in vector is ingredient, value is the idf
+id2cuisine = {} # the trainId to cuisine(class)
 for i in xrange(len(trainData)):
 	food = trainData[i]
 
@@ -84,6 +86,7 @@ with open('answer.csv', 'w') as w:
 
 		testVector = {}
 
+		# make a test vector
 		for j in xrange(len(food['ingredients'])):
 			if food['ingredients'][j] in ingredient2id:
 				testVector[ingredient2id[food['ingredients'][j]]] = ingredient2idf[food['ingredients'][j]]
@@ -91,11 +94,14 @@ with open('answer.csv', 'w') as w:
 
 		id2cosineSimilarity = {}
 		for trainId in id2vector:
+			# calculate the test vector cosine similarity with every vector in train
 			id2cosineSimilarity[trainId] = cosineSimilarity(id2vector[trainId], testVector)
 
+		# sort to find the most similar vector in train
 		sortedId = sorted(id2cosineSimilarity.items(), key=operator.itemgetter(1), reverse=True)
 
 
+		# the test cuisine is the most similar train vector cuison
 		w.write(str(food['id']) + ',' + str(id2cuisine[sortedId[0][0]]) + '\n')
 		w.flush()
 
