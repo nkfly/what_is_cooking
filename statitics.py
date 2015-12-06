@@ -1,6 +1,17 @@
 import json
 
-with open('test.json') as test_file:
+with open('train.json') as test_file:
 	testData = json.load(test_file)
+	count = {}
+	for data in testData:
+		# print data['cuisine']
 
-print len(testData)
+		for ingredient in data['ingredients']:
+			count[ingredient] = 1
+
+	print len(count)
+
+
+
+
+# print len(testData)
