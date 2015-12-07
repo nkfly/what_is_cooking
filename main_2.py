@@ -2,6 +2,8 @@ import json
 import math
 import operator
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.decomposition import PCA
+from metric_learn import LMNN
 
 def cosineSimilarity(vec1, vec2):
 	vec1Len = 0.0
@@ -95,7 +97,22 @@ for i in xrange(len(trainData)):
 
 	Y.append(cuisine2id[food['cuisine']])
 
-clf = RandomForestClassifier(max_depth=30,n_estimators=200, n_jobs=20)
+print('now doing pca')
+pca = PCA(n_components=60)
+pca.fit(id2vector)
+id2vector = pca.transform(id2vector)
+
+print('now doing metric learning')
+metricLearning = LMNN(k=7, learn_rate=1e-6)
+metricLearning.fit(id2vector, Y, verbose=False)
+
+id2vector = metricLearning.transform()
+
+print('finish metric learning')
+
+
+
+clf = RandomForestClassifier(max_depth=25,n_estimators=200, n_jobs=20)
 clf.fit(id2vector, Y)
 
 
@@ -121,7 +138,8 @@ with open('test.json') as test_file:
 		test_data.append(x)
 
 
-
+test_data = pca.transform(test_data)
+test_data = metricLearning.transform(test_data)
 
 prediction = clf.predict(test_data)
 with open('test.json') as test_file:
