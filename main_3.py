@@ -3,7 +3,6 @@ import math
 import operator
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.decomposition import PCA
-from metric_learn import LMNN
 import xgboost as xgb
 import numpy as np
 
@@ -102,7 +101,7 @@ for i in xrange(len(trainData)):
 	Y.append(cuisine2id[food['cuisine']])
 
 print('now doing pca')
-pca = PCA(n_components=60)
+pca = PCA(n_components=100)
 pca.fit(id2vector)
 id2vector = pca.transform(id2vector)
 
@@ -176,7 +175,7 @@ param['num_class'] = 20
 # clf.fit(id2vector, Y)
 
 watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
-num_round = 5000
+num_round = 1000
 bst = xgb.train(param, xg_train, num_round, watchlist );
 # get prediction
 
