@@ -3,7 +3,6 @@ import math
 import operator
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.decomposition import PCA
-from metric_learn import LMNN
 import xgboost as xgb
 import numpy as np
 
