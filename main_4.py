@@ -4,33 +4,9 @@ import operator
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.decomposition import PCA
 from metric_learn import LMNN
+from scipy.spatial.distance import cosine
 import xgboost as xgb
 import numpy as np
-
-def cosineSimilarity(vec1, vec2):
-	vec1Len = 0.0
-
-	innerProduct = 0.0
-	for dimension in vec1:
-		if dimension in vec2:
-			innerProduct += vec1[dimension] * vec2[dimension]
-
-
-		vec1Len += vec1[dimension] * vec1[dimension]
-
-
-	vec1Len = math.sqrt(vec1Len)
-
-
-	vec2Len = 0.0
-	for dimension in vec2:
-		vec2Len += vec2[dimension] * vec2[dimension]
-
-	vec2Len = math.sqrt(vec2Len)
-
-	return innerProduct/(vec1Len * vec2Len)
-
-
 
 	
 
@@ -106,13 +82,7 @@ pca = PCA(n_components=100)
 pca.fit(id2vector)
 id2vector = pca.transform(id2vector)
 
-# print('now doing metric learning')
-# metricLearning = LMNN(k=3, learn_rate=1e-3, min_iter=3, max_iter=10)
-# metricLearning.fit(id2vector, Y, verbose=False)
 
-# id2vector = metricLearning.transform()
-
-# print('finish metric learning')
 
 test_data = []
 with open('test.json') as test_file:
@@ -140,61 +110,22 @@ with open('test.json') as test_file:
 test_data = pca.transform(test_data)
 
 
+prediction = []
+for t_data in test_data:
+	id2value = {}
+	for i in range(len(id2vector)):
+		train_data = id2vector[i]	
+		cosineValue = cosine(train_data, t_data)
+		id2value[i] = cosineValue
+
+	coo = sorted(id2value.items(), key=operator.itemgetter(1))
+	prediction.append(Y[coo[0][0]])
 
 
-# train = id2vector[:int(len(id2vector) * 0.7), :]
-# test = id2vector[int(len(id2vector) * 0.7):, :]
-
-# train_X = train
-# train_Y = Y[:int(len(id2vector) * 0.7)]
 
 
-# test_X = test
-# test_Y = Y[int(len(id2vector) * 0.7):]
-
-train_X = id2vector
-train_Y = Y
-
-test_X = test_data
-test_Y = [0 for i in range(len(test_data))]
 
 
-xg_train = xgb.DMatrix( train_X, label=train_Y)
-xg_test = xgb.DMatrix(test_X, label=test_Y)
-
-
-param = {}
-# use softmax multi-class classification
-param['objective'] = 'multi:softmax'
-# scale weight of positive examples
-param['eta'] = 0.1
-param['max_depth'] = 10
-param['silent'] = 0
-param['nthread'] = 8
-param['num_class'] = 20
-# clf = RandomForestClassifier(max_depth=35,n_estimators=300, n_jobs=20)
-# clf.fit(id2vector, Y)
-
-watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
-num_round = 1000
-bst = xgb.train(param, xg_train, num_round, watchlist );
-# get prediction
-
-
-# test_X = test_data
-# test_Y = [0 for i in range(len(test_data))]
-
-# xg_test = xgb.DMatrix(test_X, label=test_Y)
-
-
-prediction = bst.predict( xg_test );
-
-# print ('predicting, classification error=%f' % (sum( int(pred[i]) != test_Y[i] for i in range(len(test_Y))) / float(len(test_Y)) ))
-
-
-# test_data = metricLearning.transform(test_data)
-
-# prediction = clf.predict(test_data)
 
 
 with open('test.json') as test_file:
