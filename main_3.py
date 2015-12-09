@@ -5,6 +5,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.decomposition import PCA
 import xgboost as xgb
 import numpy as np
+from sklearn.ensemble import VotingClassifier
 
 def cosineSimilarity(vec1, vec2):
 	vec1Len = 0.0
@@ -48,21 +49,24 @@ id2cuisine = {}
 
 for i in xrange(len(trainData)):
 	food = trainData[i]
+	preprocessing_ingredients = []
+
 
 	for j in xrange(len(food['ingredients'])):
-		ingredient = food['ingredients'][j].lower().replace('-', '_')
-		if ingredient not in ingredient2id:
-			ingredient2id[ingredient] = len(ingredient2id) # just give id
+		ingredients = food['ingredients'][j].lower().replace('-', '_').split()
+		for ingredient in ingredients:
+			if ingredient not in ingredient2id:
+				ingredient2id[ingredient] = len(ingredient2id) # just give id
 
-		if ingredient not in ingredient2documentCount:
-			ingredient2documentCount[ingredient] = 1
-		else:
-			ingredient2documentCount[ingredient] += 1
+			if ingredient not in ingredient2documentCount:
+				ingredient2documentCount[ingredient] = 1
+			else:
+				ingredient2documentCount[ingredient] += 1
 
-		if food['cuisine'] not in cuisine2id:
-			cuisine2id[food['cuisine']] = len(cuisine2id)
+			if food['cuisine'] not in cuisine2id:
+				cuisine2id[food['cuisine']] = len(cuisine2id)
 
-			id2cuisine[cuisine2id[food['cuisine']]] = food['cuisine']
+				id2cuisine[cuisine2id[food['cuisine']]] = food['cuisine']
 
 
 
@@ -83,8 +87,9 @@ for i in xrange(len(trainData)):
 
 	vector = {}
 	for j in xrange(len(food['ingredients'])):
-		ingredient = food['ingredients'][j].lower().replace('-', '_')
-		vector[ingredient2id[ingredient]] = ingredient2idf[ingredient]
+		ingredients = food['ingredients'][j].lower().replace('-', '_').split()
+		for ingredient in ingredients:
+			vector[ingredient2id[ingredient]] = ingredient2idf[ingredient]
 
 	x = []
 	for i in range(len(ingredient2idf)):
@@ -100,10 +105,10 @@ for i in xrange(len(trainData)):
 
 	Y.append(cuisine2id[food['cuisine']])
 
-print('now doing pca')
-pca = PCA(n_components=100)
-pca.fit(id2vector)
-id2vector = pca.transform(id2vector)
+# print('now doing pca')
+# pca = PCA(n_components=100)
+# pca.fit(id2vector)
+# id2vector = pca.transform(id2vector)
 
 # print('now doing metric learning')
 # metricLearning = LMNN(k=3, learn_rate=1e-3, min_iter=3, max_iter=10)
@@ -122,9 +127,10 @@ with open('test.json') as test_file:
 
 		vector = {}
 		for j in xrange(len(food['ingredients'])):
-			ingredient = food['ingredients'][j].lower().replace('-', '_')
-			if ingredient in ingredient2id:
-				vector[ingredient2id[ingredient]] = ingredient2idf[ingredient]
+			ingredients = food['ingredients'][j].lower().replace('-', '_').split()
+			for ingredient in ingredients:
+				if ingredient in ingredient2id:
+					vector[ingredient2id[ingredient]] = ingredient2idf[ingredient]
 
 		x = []
 		for i in range(len(ingredient2idf)):
@@ -136,7 +142,7 @@ with open('test.json') as test_file:
 		test_data.append(x)
 
 
-test_data = pca.transform(test_data)
+# test_data = pca.transform(test_data)
 
 
 
@@ -179,13 +185,14 @@ num_round = 1000
 bst = xgb.train(param, xg_train, num_round, watchlist );
 # get prediction
 
-
+# eclf = VotingClassifier(estimators=[('bst', bst)], voting='soft')
+# eclf.fit(id2vector, Y)
 # test_X = test_data
 # test_Y = [0 for i in range(len(test_data))]
 
 # xg_test = xgb.DMatrix(test_X, label=test_Y)
 
-
+# prediction = eclf.predict(xg_test)
 prediction = bst.predict( xg_test );
 
 # print ('predicting, classification error=%f' % (sum( int(pred[i]) != test_Y[i] for i in range(len(test_Y))) / float(len(test_Y)) ))
