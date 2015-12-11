@@ -156,7 +156,7 @@ model.fit(np.array(lda_X))  # model.fit_transform(X) is also available
 topic_word = model.topic_word_  # model.components_ also works
 
 for i in range(len(id2vector)):
-	topic_distribution = [0 for i in range(20)]
+	topic_distribution = [0 for t in range(20)]
 
 	for j in range(len(id2vector[i])):
 		if id2vector[i][j] == 0:
@@ -229,7 +229,7 @@ with open('test.json') as test_file:
 
 
 for i in range(len(test_data)):
-	topic_distribution = [0 for i in range(20)]
+	topic_distribution = [0 for t in range(20)]
 
 	for j in range(len(test_data[i])):
 		if test_data[i][j] == 0:
