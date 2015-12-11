@@ -6,6 +6,7 @@ from sklearn.decomposition import PCA
 import xgboost as xgb
 import numpy as np
 from sklearn.ensemble import VotingClassifier
+import lda
 
 def cosineSimilarity(vec1, vec2):
 	vec1Len = 0.0
@@ -100,9 +101,12 @@ for ingredient in ingredient2documentCount:
 
 
 
+
+
 id2vector = []
 # id2cuisine = {} # the trainId to cuisine(class)
 Y = []
+lda_X = []
 for i in xrange(len(trainData)):
 	food = trainData[i]
 
@@ -126,18 +130,63 @@ for i in xrange(len(trainData)):
 
 
 	x = []
+	lda_x = []
 	for i in range(len(ingredient2idf)):
 		if i in vector:
 			x.append(ingredient2idf[id2ingredient[i]])
+			lda_x.append(vector[i])
+
 		else:
 			x.append(0)
+			lda_x.append(0)
 
 
 	# id2vector[food['id']] = vector
 	id2vector.append(x)
+	lda_X.append(lda_x)
 	# id2cuisine[food['id']] = food['cuisine']
 
 	Y.append(cuisine2id[food['cuisine']])
+
+
+# lda
+model = lda.LDA(n_topics=20, n_iter=500, random_state=1)
+print np.array(lda_X)
+model.fit(np.array(lda_X))  # model.fit_transform(X) is also available
+topic_word = model.topic_word_  # model.components_ also works
+
+for i in range(len(id2vector)):
+	topic_distribution = [0 for i in range(20)]
+
+	for j in range(len(id2vector[i])):
+		if id2vector[i][j] == 0:
+			continue
+
+
+		max_k = 0
+		max_proba = 0.0
+		for k, topic_dist in enumerate(topic_word):
+			if topic_dist[k] > max_proba:
+				max_proba = topic_dist[k]
+				max_k = k
+
+
+		topic_distribution[max_k] += 1
+
+
+
+	id2vector[i].extend(topic_distribution)
+
+
+print len(id2vector[0])
+
+			
+
+
+
+
+
+
 
 # print('now doing pca')
 # pca = PCA(n_components=100)
@@ -178,6 +227,28 @@ with open('test.json') as test_file:
 
 		test_data.append(x)
 
+
+for i in range(len(test_data)):
+	topic_distribution = [0 for i in range(20)]
+
+	for j in range(len(test_data[i])):
+		if test_data[i][j] == 0:
+			continue
+
+
+		max_k = 0
+		max_proba = 0.0
+		for k, topic_dist in enumerate(topic_word):
+			if topic_dist[k] > max_proba:
+				max_proba = topic_dist[k]
+				max_k = k
+
+
+		topic_distribution[max_k] += 1
+
+
+
+	test_data[i].extend(topic_distribution)
 
 # test_data = pca.transform(test_data)
 
