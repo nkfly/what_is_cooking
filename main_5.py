@@ -266,6 +266,15 @@ for i in range(len(test_data)):
 
 # test_data = pca.transform(test_data)
 
+y_pred = kmeans.fit_predict(test_data)
+
+for i in range(len(y_pred)):
+	for j in range(20):
+		if j == y_pred[i]:
+			test_data[i].append(1)
+		else:
+			test_data[i].append(0)
+
 
 
 
