@@ -180,9 +180,10 @@ for i in range(len(id2vector)):
 	id2vector[i].extend(topic_distribution)
 
 
+clf = RandomForestClassifier(max_depth=35,n_estimators=500, n_jobs=20)
+clf.fit(id2vector, Y)
 
-kmeans = KMeans(init='k-means++', n_clusters=20, n_init=10)
-y_pred = kmeans.fit_predict(id2vector)
+y_pred = clf.predict(id2vector)
 
 for i in range(len(y_pred)):
 	id2vector[i].append(y_pred[i])
@@ -262,7 +263,7 @@ for i in range(len(test_data)):
 
 # test_data = pca.transform(test_data)
 
-y_pred = kmeans.fit_predict(test_data)
+y_pred = clf.predict(test_data)
 
 for i in range(len(y_pred)):
 	test_data[i].append(y_pred[i])
