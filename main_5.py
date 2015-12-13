@@ -7,6 +7,8 @@ import xgboost as xgb
 import numpy as np
 from sklearn.ensemble import VotingClassifier
 import lda
+from sklearn.cluster import KMeans
+
 
 def cosineSimilarity(vec1, vec2):
 	vec1Len = 0.0
@@ -176,6 +178,18 @@ for i in range(len(id2vector)):
 
 
 	id2vector[i].extend(topic_distribution)
+
+
+
+kmeans = KMeans(init='k-means++', n_clusters=20, n_init=10)
+y_pred = kmeans.fit_predict(id2vector)
+
+for i in range(len(y_pred)):
+	for j in range(20):
+		if j == y_pred[i]:
+			id2vector[i].append(1)
+		else:
+			id2vector[i].append(0)
 
 
 print len(id2vector[0])
