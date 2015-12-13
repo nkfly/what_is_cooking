@@ -61,7 +61,7 @@ for i in xrange(len(trainData)):
 
 
 	for j in xrange(len(food['ingredients'])):
-		ingredients = food['ingredients'][j].lower().replace('-', '_').split()
+		ingredients = food['ingredients'][j].lower().replace('-', ' ').split()
 		for ingredient in ingredients:
 			if ingredient not in ingredient2id:
 				ingredient2id[ingredient] = len(ingredient2id) # just give id
@@ -114,7 +114,7 @@ for i in xrange(len(trainData)):
 
 	vector = {}
 	for j in xrange(len(food['ingredients'])):
-		ingredients = food['ingredients'][j].lower().replace('-', '_').split()
+		ingredients = food['ingredients'][j].lower().replace('-', ' ').split()
 		vector['length'] = 0
 		for ingredient in ingredients:
 			# if ingredient2id[ingredient] not in vector:
@@ -181,15 +181,15 @@ for i in range(len(id2vector)):
 
 
 
-kmeans = KMeans(init='k-means++', n_clusters=20, n_init=10)
-y_pred = kmeans.fit_predict(id2vector)
+# kmeans = KMeans(init='k-means++', n_clusters=20, n_init=10)
+# y_pred = kmeans.fit_predict(id2vector)
 
-for i in range(len(y_pred)):
-	for j in range(20):
-		if j == y_pred[i]:
-			id2vector[i].append(1)
-		else:
-			id2vector[i].append(0)
+# for i in range(len(y_pred)):
+# 	for j in range(20):
+# 		if j == y_pred[i]:
+# 			id2vector[i].append(1)
+# 		else:
+# 			id2vector[i].append(0)
 
 
 print len(id2vector[0])
@@ -224,7 +224,7 @@ with open('test.json') as test_file:
 
 		vector = {}
 		for j in xrange(len(food['ingredients'])):
-			ingredients = food['ingredients'][j].lower().replace('-', '_').split()
+			ingredients = food['ingredients'][j].lower().replace('-', ' ').split()
 			for ingredient in ingredients:
 				if ingredient in ingredient2id:
 					if ingredient2id[ingredient] not in vector:
@@ -266,14 +266,14 @@ for i in range(len(test_data)):
 
 # test_data = pca.transform(test_data)
 
-y_pred = kmeans.fit_predict(test_data)
+# y_pred = kmeans.fit_predict(test_data)
 
-for i in range(len(y_pred)):
-	for j in range(20):
-		if j == y_pred[i]:
-			test_data[i].append(1)
-		else:
-			test_data[i].append(0)
+# for i in range(len(y_pred)):
+# 	for j in range(20):
+# 		if j == y_pred[i]:
+# 			test_data[i].append(1)
+# 		else:
+# 			test_data[i].append(0)
 
 
 
