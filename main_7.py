@@ -9,6 +9,8 @@ from sklearn.ensemble import VotingClassifier
 import lda
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import RFECV
+from nltk import word_tokenize
+from nltk.stem import WordNetLemmatizer
 
 def cosineSimilarity(vec1, vec2):
 	vec1Len = 0.0
@@ -100,10 +102,6 @@ for ingredient in ingredient2documentCount:
 	# ingredient2idf[ingredient] = math.log10(1+20.0/len(ingredient2classCount[ingredient])) 
 
 
-
-sortedIdf = sorted(ingredient2idf.items(), key=operator.itemgetter(1))
-for i in range(100):
-	ingredient2idf[sortedIdf[i][0]] = 0	
 
 
 
@@ -282,21 +280,21 @@ for i in range(len(test_data)):
 
 
 
-# train = id2vector[:int(len(id2vector) * 0.7), :]
-# test = id2vector[int(len(id2vector) * 0.7):, :]
+train = id2vector[:int(len(id2vector) * 0.7), :]
+test = id2vector[int(len(id2vector) * 0.7):, :]
 
-# train_X = train
-# train_Y = Y[:int(len(id2vector) * 0.7)]
+train_X = train
+train_Y = Y[:int(len(id2vector) * 0.7)]
 
 
-# test_X = test
-# test_Y = Y[int(len(id2vector) * 0.7):]
+test_X = test
+test_Y = Y[int(len(id2vector) * 0.7):]
 
-train_X = id2vector
-train_Y = Y
+# train_X = id2vector
+# train_Y = Y
 
-test_X = test_data
-test_Y = [0 for i in range(len(test_data))]
+# test_X = test_data
+# test_Y = [0 for i in range(len(test_data))]
 
 
 xg_train = xgb.DMatrix( train_X, label=train_Y)
@@ -330,6 +328,19 @@ bst = xgb.train(param, xg_train, num_round, watchlist );
 # prediction = eclf.predict(xg_test)
 prediction = bst.predict( xg_test );
 
+errorDistribution = [0 for i in range(20)]
+
+for i in range(int(len(id2vector) * 0.7), len(id2vector)):
+	if prediction[i] != Y[i]:
+		print 'predict ' + str(id2cuisine[prediction[i]]) + ' but is ' + str(id2cuisine[Y[i]]) + ' ' + trainData[i]
+
+
+		errorDistribution[i] += 1
+
+for i in range(20):
+	print str(id2cuisine[i]) + ' ' + errorDistribution[i]
+
+
 # print ('predicting, classification error=%f' % (sum( int(pred[i]) != test_Y[i] for i in range(len(test_Y))) / float(len(test_Y)) ))
 
 
@@ -338,17 +349,17 @@ prediction = bst.predict( xg_test );
 # prediction = clf.predict(test_data)
 
 
-with open('test.json') as test_file:
-	testData = json.load(test_file)
-	with open('answer2.csv', 'w') as w:
-		w.write('id,cuisine\n')
+# with open('test.json') as test_file:
+# 	testData = json.load(test_file)
+# 	with open('answer2.csv', 'w') as w:
+# 		w.write('id,cuisine\n')
 		
-		for i in xrange(len(testData)):
-			food = testData[i]
+# 		for i in xrange(len(testData)):
+# 			food = testData[i]
 
 			
-			w.write(str(food['id']) + ',' + str(id2cuisine[prediction[i]]) + '\n')
-			w.flush()
+# 			w.write(str(food['id']) + ',' + str(id2cuisine[prediction[i]]) + '\n')
+# 			w.flush()
 
 
 			
