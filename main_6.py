@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.ensemble import VotingClassifier
 import lda
 from sklearn.cluster import KMeans
-
+from sklearn.feature_selection import RFECV
 
 def cosineSimilarity(vec1, vec2):
 	vec1Len = 0.0
@@ -180,15 +180,21 @@ for i in range(len(id2vector)):
 	id2vector[i].extend(topic_distribution)
 
 
-clf = RandomForestClassifier(max_depth=35,n_estimators=500, n_jobs=20)
-clf.fit(id2vector, Y)
+estimator = RandomForestClassifier(max_depth=35,n_estimators=300, n_jobs=20)
+selector = RFECV(estimator, step=1, cv=5)
+selector = selector.fit(id2vector, Y)
 
-y_pred = clf.predict(id2vector)
+print 'best feature number ' + str(selector.n_features_)
 
-for i in range(len(y_pred)):
-	id2vector[i].append(y_pred[i])
+# clf.fit(id2vector, Y)
+
+# y_pred = clf.predict(id2vector)
+
+# for i in range(len(y_pred)):
+# 	id2vector[i].append(y_pred[i])
 	
 
+id2vector = selector.transform(id2vector)
 print len(id2vector[0])
 
 			
@@ -262,11 +268,12 @@ for i in range(len(test_data)):
 	test_data[i].extend(topic_distribution)
 
 # test_data = pca.transform(test_data)
+test_data = selector.transform(test_data)
 
-y_pred = clf.predict(test_data)
+# y_pred = clf.predict(test_data)
 
-for i in range(len(y_pred)):
-	test_data[i].append(y_pred[i])
+# for i in range(len(y_pred)):
+	# test_data[i].append(y_pred[i])
 
 
 
