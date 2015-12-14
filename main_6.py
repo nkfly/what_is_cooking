@@ -181,7 +181,7 @@ for i in range(len(id2vector)):
 
 
 estimator = RandomForestClassifier(max_depth=35,n_estimators=300, n_jobs=20)
-selector = RFECV(estimator, step=1, cv=5)
+selector = RFECV(estimator, step=10, cv=5, verbose=1)
 selector = selector.fit(id2vector, Y)
 
 print 'best feature number ' + str(selector.n_features_)
