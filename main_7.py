@@ -102,7 +102,9 @@ for ingredient in ingredient2documentCount:
 	# ingredient2idf[ingredient] = math.log10(1+20.0/len(ingredient2classCount[ingredient])) 
 
 
-
+#sortedIdf = sorted(ingredient2idf.items(), key=operator.itemgetter(1))
+#for i in range(3000, len(ingredient2idf)):
+#	ingredient2idf[sortedIdf[i][0]] = 0
 
 
 
@@ -208,9 +210,9 @@ print len(id2vector[0])
 
 
 # print('now doing pca')
-# pca = PCA(n_components=100)
-# pca.fit(id2vector)
-# id2vector = pca.transform(id2vector)
+pca = PCA(n_components=3000)
+pca.fit(id2vector)
+id2vector = pca.transform(id2vector)
 
 # print('now doing metric learning')
 # metricLearning = LMNN(k=3, learn_rate=1e-3, min_iter=3, max_iter=10)
@@ -269,7 +271,7 @@ for i in range(len(test_data)):
 
 	test_data[i].extend(topic_distribution)
 
-# test_data = pca.transform(test_data)
+test_data = pca.transform(test_data)
 # test_data = selector.transform(test_data)
 
 # y_pred = clf.predict(test_data)
@@ -280,21 +282,22 @@ for i in range(len(test_data)):
 
 
 
-train = id2vector[:int(len(id2vector) * 0.7), :]
-test = id2vector[int(len(id2vector) * 0.7):, :]
 
-train_X = train
-train_Y = Y[:int(len(id2vector) * 0.7)]
+#train = id2vector[:int(len(id2vector) * 0.7)]
+#test = id2vector[int(len(id2vector) * 0.7):]
+
+#train_X = train
+#train_Y = Y[:int(len(id2vector) * 0.7)]
 
 
-test_X = test
-test_Y = Y[int(len(id2vector) * 0.7):]
+#test_X = test
+#test_Y = Y[int(len(id2vector) * 0.7):]
 
-# train_X = id2vector
-# train_Y = Y
+train_X = id2vector
+train_Y = Y
 
-# test_X = test_data
-# test_Y = [0 for i in range(len(test_data))]
+test_X = test_data
+test_Y = [0 for i in range(len(test_data))]
 
 
 xg_train = xgb.DMatrix( train_X, label=train_Y)
@@ -314,7 +317,7 @@ param['num_class'] = 20
 # clf.fit(id2vector, Y)
 
 watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
-num_round = 800
+num_round = 400
 bst = xgb.train(param, xg_train, num_round, watchlist );
 # get prediction
 
@@ -328,17 +331,17 @@ bst = xgb.train(param, xg_train, num_round, watchlist );
 # prediction = eclf.predict(xg_test)
 prediction = bst.predict( xg_test );
 
-errorDistribution = [0 for i in range(20)]
+#errorDistribution = [0 for i in range(20)]
 
-for i in range(int(len(id2vector) * 0.7), len(id2vector)):
-	if prediction[i] != Y[i]:
-		print 'predict ' + str(id2cuisine[prediction[i]]) + ' but is ' + str(id2cuisine[Y[i]]) + ' ' + trainData[i]
+#for i in range(int(len(id2vector) * 0.7), len(id2vector)):
+#	if prediction[i-int(len(id2vector)*0.7)] != Y[i]:
+#		print 'predict ' + str(id2cuisine[prediction[i-int(len(id2vector)*0.7)]]) + ' but is ' + str(id2cuisine[Y[i]]) + ' ' + str(trainData[i]['ingredients'])
 
 
-		errorDistribution[i] += 1
+#		errorDistribution[int(prediction[i-int(len(id2vector)*0.7)])] += 1
 
-for i in range(20):
-	print str(id2cuisine[i]) + ' ' + errorDistribution[i]
+#for i in range(20):
+#	print str(id2cuisine[i]) + ' ' + str(errorDistribution[i])
 
 
 # print ('predicting, classification error=%f' % (sum( int(pred[i]) != test_Y[i] for i in range(len(test_Y))) / float(len(test_Y)) ))
@@ -346,20 +349,20 @@ for i in range(20):
 
 # test_data = metricLearning.transform(test_data)
 
-# prediction = clf.predict(test_data)
+#prediction = clf.predict(test_data)
 
 
-# with open('test.json') as test_file:
-# 	testData = json.load(test_file)
-# 	with open('answer2.csv', 'w') as w:
-# 		w.write('id,cuisine\n')
+with open('test.json') as test_file:
+ 	testData = json.load(test_file)
+ 	with open('answer2.csv', 'w') as w:
+ 		w.write('id,cuisine\n')
 		
-# 		for i in xrange(len(testData)):
-# 			food = testData[i]
+ 		for i in xrange(len(testData)):
+ 			food = testData[i]
 
 			
-# 			w.write(str(food['id']) + ',' + str(id2cuisine[prediction[i]]) + '\n')
-# 			w.flush()
+ 			w.write(str(food['id']) + ',' + str(id2cuisine[prediction[i]]) + '\n')
+ 			w.flush()
 
 
 			

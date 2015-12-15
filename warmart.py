@@ -46,7 +46,7 @@ for visitNumber in visitNumber2document:
 		elif key == 'weekDay':
 			continue
 		else:
-			x[departmentDescription2dimension[key]] += departmentDescription2dimension[key]
+			x[departmentDescription2dimension[key]] += document[key]
 
 	X.append(x)
 
@@ -85,7 +85,7 @@ for visitNumber in testVisitNumber2document:
 		elif key == 'weekDay':
 			continue
 		else:
-			x[departmentDescription2dimension[key]] += departmentDescription2dimension[key]
+			x[departmentDescription2dimension[key]] += document[key]
 
 	test_data.append(x)
 
@@ -104,21 +104,23 @@ xg_test = xgb.DMatrix(test_X, label=test_Y)
 
 param = {}
 # use softmax multi-class classification
-param['objective'] = 'multi:softmax'
+param['objective'] = 'multi:softprob'
 # scale weight of positive examples
 param['eta'] = 0.1
 param['max_depth'] = 10
 param['silent'] = 0
 param['nthread'] = 8
-param['num_class'] = 20
+param['num_class'] = 38
+param['eval_metric'] = 'mlogloss'
 
 
 watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
-num_round = 800
+num_round = 2000
 bst = xgb.train(param, xg_train, num_round, watchlist )
 
 prediction = bst.predict( xg_test )
-with open('test.csv') as f:
+print prediction
+with open('sample_submission.csv') as f:
 	header = f.readline()
 	with open('warmart_answer.csv', 'w') as w:
 		w.write('"VisitNumber","TripType_3","TripType_4","TripType_5","TripType_6","TripType_7","TripType_8","TripType_9","TripType_12","TripType_14","TripType_15","TripType_18","TripType_19","TripType_20","TripType_21","TripType_22","TripType_23","TripType_24","TripType_25","TripType_26","TripType_27","TripType_28","TripType_29","TripType_30","TripType_31","TripType_32","TripType_33","TripType_34","TripType_35","TripType_36","TripType_37","TripType_38","TripType_39","TripType_40","TripType_41","TripType_42","TripType_43","TripType_44","TripType_999"\n')
@@ -127,12 +129,9 @@ with open('test.csv') as f:
 			entries = line.strip().split(',')
 			visitNumber = entries[0]
 
-			w.write(visitNumber)
-			for tripType in tripTypeOrder:
-				if tripType2class[tripType] == prediction[i]:
-					w.write(',1' + )
-				else:
-					w.write(',0')
+			w.write(visitNumber + ',')
+			w.write(','.join([ str(tt) for tt in prediction[i]]))
+
 			w.write('\n')
 
 

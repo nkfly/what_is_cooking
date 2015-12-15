@@ -9,6 +9,8 @@ from sklearn.ensemble import VotingClassifier
 import lda
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import RFECV
+from metric_learn import LMNN
+from metric_learn import SDML
 
 def cosineSimilarity(vec1, vec2):
 	vec1Len = 0.0
@@ -52,6 +54,7 @@ cuisine2id = {}
 id2cuisine = {}
 ingredient2classCount = {}
 
+stop_words = []
 
 averageDocumentLength = 0.0
 
@@ -63,6 +66,8 @@ for i in xrange(len(trainData)):
 	for j in xrange(len(food['ingredients'])):
 		ingredients = food['ingredients'][j].lower().replace('-', ' ').split()
 		for ingredient in ingredients:
+			if ingredient in stop_words:
+				continue
 			if ingredient not in ingredient2id:
 				ingredient2id[ingredient] = len(ingredient2id) # just give id
 				id2ingredient[ingredient2id[ingredient]] = ingredient
@@ -117,6 +122,8 @@ for i in xrange(len(trainData)):
 		ingredients = food['ingredients'][j].lower().replace('-', ' ').split()
 		vector['length'] = 0
 		for ingredient in ingredients:
+			if ingredient in stop_words:
+				continue
 			# if ingredient2id[ingredient] not in vector:
 			# 	vector[ingredient2id[ingredient]] = ingredient2idf[ingredient]
 			# else:
@@ -142,7 +149,8 @@ for i in xrange(len(trainData)):
 			x.append(0)
 			lda_x.append(0)
 
-
+	#x.append(vector['length'])
+	#lda_x.append(vector['length'])
 	# id2vector[food['id']] = vector
 	id2vector.append(x)
 	lda_X.append(lda_x)
@@ -156,6 +164,8 @@ model = lda.LDA(n_topics=20, n_iter=500, random_state=1)
 print np.array(lda_X)
 model.fit(np.array(lda_X))  # model.fit_transform(X) is also available
 topic_word = model.topic_word_  # model.components_ also works
+
+print topic_word
 
 for i in range(len(id2vector)):
 	topic_distribution = [0 for t in range(20)]
@@ -180,11 +190,11 @@ for i in range(len(id2vector)):
 	id2vector[i].extend(topic_distribution)
 
 
-estimator = RandomForestClassifier(max_depth=35,n_estimators=300, n_jobs=20)
-selector = RFECV(estimator, step=10, cv=5, verbose=1)
-selector = selector.fit(id2vector, Y)
+#estimator = RandomForestClassifier(max_depth=35,n_estimators=300, n_jobs=20)
+#selector = RFECV(estimator, step=10, cv=5, verbose=1)
+#selector = selector.fit(id2vector, Y)
 
-print 'best feature number ' + str(selector.n_features_)
+#print 'best feature number ' + str(selector.n_features_)
 
 # clf.fit(id2vector, Y)
 
@@ -194,7 +204,7 @@ print 'best feature number ' + str(selector.n_features_)
 # 	id2vector[i].append(y_pred[i])
 	
 
-id2vector = selector.transform(id2vector)
+#id2vector = selector.transform(id2vector)
 print len(id2vector[0])
 
 			
@@ -211,10 +221,13 @@ print len(id2vector[0])
 # id2vector = pca.transform(id2vector)
 
 # print('now doing metric learning')
-# metricLearning = LMNN(k=3, learn_rate=1e-3, min_iter=3, max_iter=10)
-# metricLearning.fit(id2vector, Y, verbose=False)
+#metricLearning = LMNN(k=3, learn_rate=1e-3, min_iter=3, max_iter=10)
+#metricLearning.fit(np.array(id2vector), Y, verbose=True)
+#metricLearning = SDML()
+#W = SDML.prepare_constraints(Y, len(id2vector), 1500)
+#metricLearning.fit(np.array(id2vector), W)
 
-# id2vector = metricLearning.transform()
+#id2vector = metricLearning.transform()
 
 # print('finish metric learning')
 
@@ -226,9 +239,13 @@ with open('test.json') as test_file:
 		food = data
 
 		vector = {}
+		vector['length'] = 0
 		for j in xrange(len(food['ingredients'])):
 			ingredients = food['ingredients'][j].lower().replace('-', ' ').split()
 			for ingredient in ingredients:
+				if ingredient in stop_words:
+					continue
+				vector['length'] += 1
 				if ingredient in ingredient2id:
 					if ingredient2id[ingredient] not in vector:
 						vector[ingredient2id[ingredient]] = ingredient2idf[ingredient]
@@ -241,7 +258,7 @@ with open('test.json') as test_file:
 				x.append(vector[i])
 			else:
 				x.append(0)
-
+		#x.append(vector['length'])
 		test_data.append(x)
 
 
@@ -256,6 +273,7 @@ for i in range(len(test_data)):
 		max_k = 0
 		max_proba = 0.0
 		for k, topic_dist in enumerate(topic_word):
+			
 			if topic_dist[k] > max_proba:
 				max_proba = topic_dist[k]
 				max_k = k
@@ -268,14 +286,14 @@ for i in range(len(test_data)):
 	test_data[i].extend(topic_distribution)
 
 # test_data = pca.transform(test_data)
-test_data = selector.transform(test_data)
+#test_data = selector.transform(test_data)
 
 # y_pred = clf.predict(test_data)
 
 # for i in range(len(y_pred)):
 	# test_data[i].append(y_pred[i])
 
-
+#test_data = metricLearning.transform(np.array(test_data))
 
 
 # train = id2vector[:int(len(id2vector) * 0.7), :]
