@@ -260,7 +260,7 @@ param['nthread'] = 8
 param['num_class'] = 20
 
 watchlist = [ (xg_train,'train')]
-num_round = 8
+num_round = 800
 bst = xgb.train(param, xg_train, num_round, watchlist)
 
 prediction = bst.predict( xg_test )
@@ -268,6 +268,7 @@ prediction = bst.predict( xg_test )
 _test_X = test_data
 
 for iteration in range(5):
+	print 'len of training is ' + str(len(id2vector))
 	maxProbArray = []
 	for i in range(len(prediction)):
 		maxProbArray.append(np.amax(prediction[i]))
