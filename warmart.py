@@ -19,7 +19,8 @@ with open('train.csv', 'r') as f:
 		visitNumber = entries[1]
 		weekDay = entries[2]
 		scanCount = int(entries[4])
-		departmentDescription = entries[5]
+		# departmentDescription = entries[5]
+		departmentDescription = entries[6]
 
 		if departmentDescription not in departmentDescription2dimension:
 			departmentDescription2dimension[departmentDescription] = len(departmentDescription2dimension)
@@ -29,25 +30,29 @@ with open('train.csv', 'r') as f:
 			visitNumber2document[visitNumber] = {'tripType' : 'TripType_' + tripType, 'weekDay' : weekDay,  departmentDescription : scanCount}
 		else:
 			if departmentDescription in visitNumber2document[visitNumber]:
-				visitNumber2document[visitNumber][departmentDescription] += scanCount
+				# visitNumber2document[visitNumber][departmentDescription] += scanCount
+				visitNumber2document[visitNumber][departmentDescription] = 1
 			else:
-				visitNumber2document[visitNumber][departmentDescription] = scanCount
+				visitNumber2document[visitNumber][departmentDescription] = 1
+				# visitNumber2document[visitNumber][departmentDescription] = scanCount
 
 X = []
 Y = []
-
+day2index = {'"monday"' : 0, '"tuesday"' : 1, '"wednesday"' : 2, '"thursday"' : 3, '"friday"':4, '"saturday"':5, '"sunday"':6}
 for visitNumber in visitNumber2document:
 	document = visitNumber2document[visitNumber]
 
 	x = [0 for i in range(len(departmentDescription2dimension))]
+	week_x = [0 for i in range(7)]
 	for key in document:
 		if key == 'tripType':
 			Y.append(tripType2class[document[key]])
 		elif key == 'weekDay':
+			week_x[day2index[document[key].lower()]] = 1
 			continue
 		else:
 			x[departmentDescription2dimension[key]] += document[key]
-
+	x.extend(week_x)
 	X.append(x)
 
 
@@ -61,15 +66,18 @@ with open('test.csv') as f:
 		visitNumber = entries[0]
 		weekDay = entries[1]
 		scanCount = int(entries[3])
-		departmentDescription = entries[4]
+		# departmentDescription = entries[4]
+		departmentDescription = entries[5]
 
 		if visitNumber not in testVisitNumber2document:
 			testVisitNumber2document[visitNumber] = {'tripType' : 0, 'weekDay' : weekDay,  departmentDescription : scanCount}
 		else:
 			if departmentDescription in testVisitNumber2document[visitNumber]:
-				testVisitNumber2document[visitNumber][departmentDescription] += scanCount
+				# testVisitNumber2document[visitNumber][departmentDescription] += scanCount
+				testVisitNumber2document[visitNumber][departmentDescription] = 1
 			else:
-				testVisitNumber2document[visitNumber][departmentDescription] = scanCount
+				testVisitNumber2document[visitNumber][departmentDescription] = 1
+				# testVisitNumber2document[visitNumber][departmentDescription] = scanCount
 
 
 
@@ -79,14 +87,16 @@ for visitNumber in testVisitNumber2document:
 	document = testVisitNumber2document[visitNumber]
 
 	x = [0 for i in range(len(departmentDescription2dimension))]
+	week_x = [0 for i in range(7)]
 	for key in document:
 		if key == 'tripType':
 			test_Y.append(0)
 		elif key == 'weekDay':
+			week_x[day2index[document[key].lower()]] = 1
 			continue
 		else:
 			x[departmentDescription2dimension[key]] += document[key]
-
+	x.extend(week_x)		
 	test_data.append(x)
 
 
@@ -115,7 +125,7 @@ param['eval_metric'] = 'mlogloss'
 
 
 watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
-num_round = 2000
+num_round = 1200
 bst = xgb.train(param, xg_train, num_round, watchlist )
 
 prediction = bst.predict( xg_test )
