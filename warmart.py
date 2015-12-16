@@ -30,11 +30,11 @@ with open('train.csv', 'r') as f:
 			visitNumber2document[visitNumber] = {'tripType' : 'TripType_' + tripType, 'weekDay' : weekDay,  departmentDescription : scanCount}
 		else:
 			if departmentDescription in visitNumber2document[visitNumber]:
-				# visitNumber2document[visitNumber][departmentDescription] += scanCount
+				#visitNumber2document[visitNumber][departmentDescription] += scanCount
 				visitNumber2document[visitNumber][departmentDescription] = 1
 			else:
 				visitNumber2document[visitNumber][departmentDescription] = 1
-				# visitNumber2document[visitNumber][departmentDescription] = scanCount
+				#visitNumber2document[visitNumber][departmentDescription] = scanCount
 
 X = []
 Y = []
@@ -73,11 +73,11 @@ with open('test.csv') as f:
 			testVisitNumber2document[visitNumber] = {'tripType' : 0, 'weekDay' : weekDay,  departmentDescription : scanCount}
 		else:
 			if departmentDescription in testVisitNumber2document[visitNumber]:
-				# testVisitNumber2document[visitNumber][departmentDescription] += scanCount
+				#testVisitNumber2document[visitNumber][departmentDescription] += scanCount
 				testVisitNumber2document[visitNumber][departmentDescription] = 1
 			else:
 				testVisitNumber2document[visitNumber][departmentDescription] = 1
-				# testVisitNumber2document[visitNumber][departmentDescription] = scanCount
+				#testVisitNumber2document[visitNumber][departmentDescription] = scanCount
 
 
 
@@ -95,7 +95,8 @@ for visitNumber in testVisitNumber2document:
 			week_x[day2index[document[key].lower()]] = 1
 			continue
 		else:
-			x[departmentDescription2dimension[key]] += document[key]
+			if key in departmentDescription2dimension:
+				x[departmentDescription2dimension[key]] += document[key]
 	x.extend(week_x)		
 	test_data.append(x)
 
@@ -125,7 +126,7 @@ param['eval_metric'] = 'mlogloss'
 
 
 watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
-num_round = 1200
+num_round = 1500
 bst = xgb.train(param, xg_train, num_round, watchlist )
 
 prediction = bst.predict( xg_test )
