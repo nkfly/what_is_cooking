@@ -354,7 +354,7 @@ prediction = bst.predict( xg_test );
 
 with open('test.json') as test_file:
  	testData = json.load(test_file)
- 	with open('answer2.csv', 'w') as w:
+ 	with open('answer3.csv', 'w') as w:
  		w.write('id,cuisine\n')
 		
  		for i in xrange(len(testData)):

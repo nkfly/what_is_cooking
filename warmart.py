@@ -12,6 +12,7 @@ tripType2class = {"TripType_3":0,"TripType_4":1,"TripType_5":2,"TripType_6":3,"T
 
 with open('train.csv', 'r') as f:
 	header = f.readline().strip().split(',')
+	print len(header)
 	for line in f:
 		entries = line.strip().split(',')
 

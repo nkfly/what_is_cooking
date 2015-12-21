@@ -130,7 +130,7 @@ for t_data in test_data:
 
 with open('test.json') as test_file:
 	testData = json.load(test_file)
-	with open('answer.csv', 'w') as w:
+	with open('answer4.csv', 'w') as w:
 		w.write('id,cuisine\n')
 		
 		for i in xrange(len(testData)):
