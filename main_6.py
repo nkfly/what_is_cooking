@@ -101,8 +101,8 @@ averageDocumentLength = averageDocumentLength / len(trainData)
 # now idf is able to be counted
 ingredient2idf = {}
 for ingredient in ingredient2documentCount:
-	ingredient2idf[ingredient] = math.log10(1+float(len(trainData))/ingredient2documentCount[ingredient]) 
-	# ingredient2idf[ingredient] = math.log10(1+20.0/len(ingredient2classCount[ingredient])) 
+	#ingredient2idf[ingredient] = math.log10(1+float(len(trainData))/ingredient2documentCount[ingredient]) 
+	ingredient2idf[ingredient] = 1
 
 
 
@@ -160,7 +160,7 @@ for i in xrange(len(trainData)):
 
 
 # lda
-model = lda.LDA(n_topics=20, n_iter=500, random_state=1)
+model = lda.LDA(n_topics=20, n_iter=700, random_state=1)
 print np.array(lda_X)
 model.fit(np.array(lda_X))  # model.fit_transform(X) is also available
 topic_word = model.topic_word_  # model.components_ also works
@@ -178,8 +178,9 @@ for i in range(len(id2vector)):
 		max_k = 0
 		max_proba = 0.0
 		for k, topic_dist in enumerate(topic_word):
-			if topic_dist[k] > max_proba:
-				max_proba = topic_dist[k]
+			#topic_distribution[k] += topic_dist[j]
+			if topic_dist[j] > max_proba:
+				max_proba = topic_dist[j]
 				max_k = k
 
 
@@ -273,9 +274,10 @@ for i in range(len(test_data)):
 		max_k = 0
 		max_proba = 0.0
 		for k, topic_dist in enumerate(topic_word):
+			#topic_distribution[k] += topic_dist[j]
 			
-			if topic_dist[k] > max_proba:
-				max_proba = topic_dist[k]
+			if topic_dist[j] > max_proba:
+				max_proba = topic_dist[j]
 				max_k = k
 
 
@@ -330,7 +332,7 @@ param['num_class'] = 20
 # clf.fit(id2vector, Y)
 
 watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
-num_round = 800
+num_round = 1000
 bst = xgb.train(param, xg_train, num_round, watchlist );
 # get prediction
 
