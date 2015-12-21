@@ -13,10 +13,10 @@ tripType2class = {"TripType_3":0,"TripType_4":1,"TripType_5":2,"TripType_6":3,"T
 
 with open('train.csv', 'r') as f:
 	# header = f.readline().strip().split(',')
-	spamreader = csv.reader(f, delimiter=',', quotechar='"')
+	spamreader = csv.DictReader(f, delimiter=',', quotechar='"')
 	for line in spamreader:
 		# entries = line.strip().split(',')
-
+		#print line
 		tripType = line['TripType']
 		visitNumber = line['VisitNumber']
 		weekDay = line['Weekday']
@@ -40,7 +40,7 @@ with open('train.csv', 'r') as f:
 
 X = []
 Y = []
-day2index = {'"monday"' : 0, '"tuesday"' : 1, '"wednesday"' : 2, '"thursday"' : 3, '"friday"':4, '"saturday"':5, '"sunday"':6}
+day2index = {'monday' : 0, 'tuesday' : 1, 'wednesday' : 2, 'thursday' : 3, 'friday':4, 'saturday':5, 'sunday':6}
 for visitNumber in visitNumber2document:
 	document = visitNumber2document[visitNumber]
 
@@ -62,7 +62,7 @@ testVisitNumber2document = {}
 
 with open('test.csv') as f:
 	# header = f.readline().strip().split(',')
-	spamreader = csv.reader(f, delimiter=',', quotechar='"')
+	spamreader = csv.DictReader(f, delimiter=',', quotechar='"')
 	for line in spamreader:
 		# entries = line.strip().split(',')
 

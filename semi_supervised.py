@@ -180,7 +180,7 @@ for i in range(len(id2vector)):
 
 
 
-	id2vector[i].extend(topic_distribution)
+	#id2vector[i].extend(topic_distribution)
 
 print len(id2vector[0])
 
@@ -236,7 +236,7 @@ for i in range(len(test_data)):
 		topic_distribution[max_k] += 1
 
 
-	test_data[i].extend(topic_distribution)
+	#test_data[i].extend(topic_distribution)
 
 train_X = id2vector
 train_Y = Y
@@ -260,14 +260,14 @@ param['nthread'] = 8
 param['num_class'] = 20
 
 watchlist = [ (xg_train,'train')]
-num_round = 800
+num_round = 1200
 bst = xgb.train(param, xg_train, num_round, watchlist)
 
 prediction = bst.predict( xg_test )
 
 _test_X = test_data
 
-for iteration in range(5):
+for iteration in range(10):
 	print 'len of training is ' + str(len(id2vector))
 	maxProbArray = []
 	for i in range(len(prediction)):
@@ -277,7 +277,7 @@ for iteration in range(5):
 	new_test_X = []
 
 	for i in range(len(prediction)):
-		if np.amax(prediction[i]) > maxProbArray[int(len(maxProbArray)/2)]:
+		if np.amax(prediction[i]) > maxProbArray[int(len(maxProbArray)*3/4)]:
 			id2vector.append(_test_X[i])
 			Y.append(np.argmax(prediction[i]))
 		else:
