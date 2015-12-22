@@ -12,18 +12,6 @@ tripTypeOrder = ["TripType_3","TripType_4","TripType_5","TripType_6","TripType_7
 tripType2class = {"TripType_3":0,"TripType_4":1,"TripType_5":2,"TripType_6":3,"TripType_7":4,"TripType_8":5,"TripType_9":6,"TripType_12":7,"TripType_14":8,"TripType_15":9,"TripType_18":10,"TripType_19":11,"TripType_20":12,"TripType_21":13,"TripType_22":14,"TripType_23":15,"TripType_24":16,"TripType_25":17,"TripType_26":18,"TripType_27":19,"TripType_28":20,"TripType_29":21,"TripType_30":22,"TripType_31":23,"TripType_32":24,"TripType_33":25,"TripType_34":26,"TripType_35":27,"TripType_36":28,"TripType_37":29,"TripType_38":30,"TripType_39":31,"TripType_40":32,"TripType_41":33,"TripType_42":34,"TripType_43":35,"TripType_44":36,"TripType_999":37}
 
 with open('train.csv', 'r') as f:
-<<<<<<< HEAD
-	header = f.readline().strip().split(',')
-	print len(header)
-	for line in f:
-		entries = line.strip().split(',')
-
-		tripType = entries[0]
-		visitNumber = entries[1]
-		weekDay = entries[2]
-		scanCount = int(entries[4])
-=======
-	# header = f.readline().strip().split(',')
 	spamreader = csv.DictReader(f, delimiter=',', quotechar='"')
 	for line in spamreader:
 		# entries = line.strip().split(',')
@@ -32,16 +20,17 @@ with open('train.csv', 'r') as f:
 		visitNumber = line['VisitNumber']
 		weekDay = line['Weekday']
 		scanCount = int(line['ScanCount'])
->>>>>>> 03ba9189c218cd7afd6385192484d6466cf447f3
-		# departmentDescription = entries[5]
-		departmentDescription = line['FinelineNumber']
+		departmentDescription = line['DepartmentDescription']
+		finelineNumber = line['FinelineNumber']
 
 		if departmentDescription not in departmentDescription2dimension:
 			departmentDescription2dimension[departmentDescription] = len(departmentDescription2dimension)
+		if finelineNumber not in departmentDescription2dimension:
+			departmentDescription2dimension[finelineNumber] = len(departmentDescription2dimension)
 
 
 		if visitNumber not in visitNumber2document:
-			visitNumber2document[visitNumber] = {'tripType' : 'TripType_' + tripType, 'weekDay' : weekDay,  departmentDescription : scanCount}
+			visitNumber2document[visitNumber] = {'tripType' : 'TripType_' + tripType, 'weekDay' : weekDay,  departmentDescription : 1, finelineNumber : 1}
 		else:
 			if departmentDescription in visitNumber2document[visitNumber]:
 				#visitNumber2document[visitNumber][departmentDescription] += scanCount
@@ -49,6 +38,8 @@ with open('train.csv', 'r') as f:
 			else:
 				visitNumber2document[visitNumber][departmentDescription] = 1
 				#visitNumber2document[visitNumber][departmentDescription] = scanCount
+			visitNumber2document[visitNumber][finelineNumber] = 1
+
 
 X = []
 Y = []
@@ -81,11 +72,11 @@ with open('test.csv') as f:
 		visitNumber = line['VisitNumber']
 		weekDay = line['Weekday']
 		scanCount = int(line['ScanCount'])
-		# departmentDescription = entries[4]
-		departmentDescription = line['FinelineNumber']
+		departmentDescription = line['DepartmentDescription']
+		finelineNumber = line['FinelineNumber']
 
 		if visitNumber not in testVisitNumber2document:
-			testVisitNumber2document[visitNumber] = {'tripType' : 0, 'weekDay' : weekDay,  departmentDescription : scanCount}
+			testVisitNumber2document[visitNumber] = {'tripType' : 0, 'weekDay' : weekDay,  departmentDescription : 1 , finelineNumber : 1}
 		else:
 			if departmentDescription in testVisitNumber2document[visitNumber]:
 				#testVisitNumber2document[visitNumber][departmentDescription] += scanCount
@@ -93,6 +84,8 @@ with open('test.csv') as f:
 			else:
 				testVisitNumber2document[visitNumber][departmentDescription] = 1
 				#testVisitNumber2document[visitNumber][departmentDescription] = scanCount
+
+			testVisitNumber2document[visitNumber][finelineNumber] = 1
 
 
 
