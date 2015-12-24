@@ -430,8 +430,11 @@ if __name__ == '__main__':
 	# print result[0]
 	# result = [ [b for a,b in sorted(zip(classes, r))] for r in result]
 	# print result[0]
+	with open('walmart_data/tripType_r.json', 'r') as f:
+		tripType2class = json.load(f)
+	
 	train_X = train_X
-	train_Y = [int(train_y[i]) for i in range(len(train_y))]
+	train_Y = [tripType2class[train_y[i]] for i in range(len(train_y))]
 
 	test_X = test_X
 	test_Y = [0 for i in range(test_X.shape[0])]
