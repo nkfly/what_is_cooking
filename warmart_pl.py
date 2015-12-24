@@ -2,46 +2,89 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder
 from scipy.sparse import csr_matrix, coo_matrix
 from sklearn.linear_model import LogisticRegression
+from sklearn.decomposition import PCA, RandomizedPCA
+
 
 #from keras.models import Sequential
 #from keras.layers.core import Dense, Dropout
 #from nltk.stem.wordnet import WordNetLemmatizer
 import re
+import csv
 import itertools
 import os.path
 import json
+import math
 from datetime import datetime
 
 
 def read_data_by_column(filename):
-	tripType, visitNumber, weekDay, scanCount, departmentDescription, FinelineNumber = [], [], [], [], [], []
+	tripType, visitNumber, weekDay, scanCount, departmentDescription, finelineNumber = [], [], [], [], [], []
 	with open(filename, 'r') as f:
-		header = f.readline().strip().split(',')
+		spamreader = csv.DictReader(f, delimiter=',', quotechar='"')
+		header = spamreader.fieldnames
 		if len(header) == 7:
-			for line in f:
-				entries = line.strip().split(',')
-				tripType.append(entries[0])
-				visitNumber.append(entries[1])
-				weekDay.append(entries[2])
-				scanCount.append(int(entries[4]))
-				departmentDescription.append(entries[5])
-				FinelineNumber.append(entries[6])
-			return tripType, visitNumber, weekDay, scanCount, departmentDescription, FinelineNumber
+			for line in spamreader:
+				tripType.append(line['TripType'])
+				visitNumber.append(line['VisitNumber'])
+				weekDay.append(line['Weekday'])
+				scanCount.append(int(line['ScanCount']))
+				departmentDescription.append(line['DepartmentDescription'])
+				finelineNumber.append(line['FinelineNumber'])
+			return tripType, visitNumber, weekDay, scanCount, departmentDescription, finelineNumber
 
 		else:
-			for line in f:
-				entries = line.strip().split(',')
-				visitNumber.append(entries[0])
-				weekDay.append(entries[1])
-				scanCount.append(int(entries[3]))
-				departmentDescription.append(entries[4])
-				FinelineNumber.append(entries[5])
-	return visitNumber, weekDay, scanCount, departmentDescription, FinelineNumber
+			for line in spamreader:
+				visitNumber.append(line['VisitNumber'])
+				weekDay.append(line['Weekday'])
+				scanCount.append(int(line['ScanCount']))
+				departmentDescription.append(line['DepartmentDescription'])
+				finelineNumber.append(line['FinelineNumber'])
+	return visitNumber, weekDay, scanCount, departmentDescription, finelineNumber
 
 
 def category_to_k_hot():
 	train_tripType, train_visitNumber, train_weekDay, train_scanCount, train_departmentDescription, train_FinelineNumber = read_data_by_column("train.csv")
 	test_visitNumber, test_weekDay, test_scanCount, test_departmentDescription, test_FinelineNumber = read_data_by_column("test.csv")
+
+	test_descount2visitnum = {}
+	test_finecount2visitnum = {}
+	for i in xrange(len(test_visitNumber)):
+		if test_visitNumber[i] not in test_descount2visitnum:
+			test_descount2visitnum[test_visitNumber[i]] = 1
+		else:
+			test_descount2visitnum[test_visitNumber[i]] += 1
+		if test_visitNumber[i] not in test_finecount2visitnum:
+			test_finecount2visitnum[test_visitNumber[i]] = 1
+		else:
+			test_finecount2visitnum[test_visitNumber[i]] += 1
+	j = json.dumps(test_descount2visitnum, indent=4)
+	f = open('walmart_data/test_descount2visitnum.json', 'w')
+	print >> f, j
+	f.close()
+	j = json.dumps(test_finecount2visitnum, indent=4)
+	f = open('walmart_data/test_finecount2visitnum.json', 'w')
+	print >> f, j
+	f.close()
+
+	train_descount2visitnum = {}
+	train_finecount2visitnum = {}
+	for i in xrange(len(train_visitNumber)):
+		if train_visitNumber[i] not in train_descount2visitnum:
+			train_descount2visitnum[train_visitNumber[i]] = 1
+		else:
+			train_descount2visitnum[train_visitNumber[i]] += 1
+		if train_visitNumber[i] not in train_finecount2visitnum:
+			train_finecount2visitnum[train_visitNumber[i]] = 1
+		else:
+			train_finecount2visitnum[train_visitNumber[i]] += 1
+	j = json.dumps(train_descount2visitnum, indent=4)
+	f = open('walmart_data/train_descount2visitnum.json', 'w')
+	print >> f, j
+	f.close()
+	j = json.dumps(train_finecount2visitnum, indent=4)
+	f = open('walmart_data/train_finecount2visitnum.json', 'w')
+	print >> f, j
+	f.close()
 
 	visitNumber2tripType = {}
 	print len(train_tripType), len(train_visitNumber)
@@ -126,6 +169,45 @@ def loaddict(filename):
 	return datadict
 
 
+def idf():
+	trainData = loaddict('train')
+	testData = loaddict('test')
+
+	dL = loaddict('departmentDescription_r')
+	wL = loaddict('weekDay_r')
+
+	dL = len(dL)
+	wL = len(wL)
+
+	train_idf = {}
+	for k1, v1 in trainData.iteritems():
+		for k2, v2 in v1.iteritems():
+			if k2 not in train_idf:
+				train_idf[k2] = 1
+			else: train_idf[k2] += 1
+	for k in train_idf:
+		train_idf[k] = math.log10(1+float(len(trainData))/train_idf[k])
+
+	test_idf = {}
+	for k1, v1 in testData.iteritems():
+		for k2, v2 in v1.iteritems():
+			if k2 not in test_idf:
+				test_idf[k2] = 1
+			else: test_idf[k2] += 1
+	for k in test_idf:
+		test_idf[k] = math.log10(1+float(len(testData))/test_idf[k])
+
+	j = json.dumps(train_idf, indent=4)
+	f = open('walmart_data/train_idf.json', 'w')
+	print >> f, j
+	f.close()
+
+	j = json.dumps(test_idf, indent=4)
+	f = open('walmart_data/test_idf.json', 'w')
+	print >> f, j
+	f.close()
+
+
 def read_data_to_dict(filename):
 	departmentDescription_r = loaddict('departmentDescription_r')
 	finelineNumber_r = loaddict('finelineNumber_r')
@@ -137,16 +219,16 @@ def read_data_to_dict(filename):
 
 	datadict = {}
 	with open(filename, 'r') as f:
-		header = f.readline().strip().split(',')
+		spamreader = csv.DictReader(f, delimiter=',', quotechar='"')
+		header = spamreader.fieldnames
 		if len(header) == 7:
-			for line in f:
-				entries = line.strip().split(',')
-				tripType = entries[0]
-				visitNumber = entries[1]
-				weekDay = entries[2]
-				scanCount = int(entries[4])
-				departmentDescription = entries[5]
-				finelineNumber = entries[6]
+			for line in spamreader:
+				tripType = line['TripType']
+				visitNumber = line['VisitNumber']
+				weekDay = line['Weekday']
+				scanCount = int(line['ScanCount'])
+				departmentDescription = line['DepartmentDescription']
+				finelineNumber = line['FinelineNumber']
 				if visitNumber in datadict:
 					if departmentDescription_r[departmentDescription] + wL in datadict[visitNumber]:
 						datadict[visitNumber][departmentDescription_r[departmentDescription] + wL] += scanCount
@@ -159,13 +241,12 @@ def read_data_to_dict(filename):
 				else:
 					datadict[visitNumber] = {weekDay_r[weekDay]: 1, departmentDescription_r[departmentDescription] + wL: scanCount, finelineNumber_r[finelineNumber] + wL + dL: scanCount}
 		else:
-			for line in f:
-				entries = line.strip().split(',')
-				visitNumber = entries[0]
-				weekDay = entries[1]
-				scanCount = int(entries[3])
-				departmentDescription = entries[4]
-				finelineNumber = entries[5]
+			for line in spamreader:
+				visitNumber = line['VisitNumber']
+				weekDay = line['Weekday']
+				scanCount = int(line['ScanCount'])
+				departmentDescription = line['DepartmentDescription']
+				finelineNumber = line['FinelineNumber']
 				if visitNumber in datadict:
 					if departmentDescription_r[departmentDescription] + wL in datadict[visitNumber]:
 						datadict[visitNumber][departmentDescription_r[departmentDescription] + wL] += scanCount
@@ -195,6 +276,9 @@ def csv2json():
 
 def train_json2matrix():
 	visitNumber2tripType = loaddict('visitNumber2tripType')
+	train_finecount2visitnum = loaddict('train_finecount2visitnum')
+	train_descount2visitnum = loaddict('train_descount2visitnum')
+	train_idf = loaddict('train_idf')
 
 	with open('walmart_data/train.json') as data_file:
 		trainData = json.load(data_file)
@@ -207,17 +291,37 @@ def train_json2matrix():
 	for k1, v1 in trainData.items():
 		r = count
 		for k2, v2 in v1.items():
+			""" 1/0, weighting(0, 1, 1)
+			if int(k2) < 7:
+				data.append(float(1)*0)
+			elif int(k2) in range(7, 69+7):
+				data.append(float(1)*1)
+			else:
+				data.append(float(1)*1)
+			"""
+			""" tfidf
+			if int(k2) in range(7, 69+7):
+				data.append(float(v2)/float(train_descount2visitnum[k1] + train_finecount2visitnum[k1]) * train_idf[k2])
+			elif int(k2) >= 76:
+				data.append(float(v2)/float(train_descount2visitnum[k1] + train_finecount2visitnum[k1]) * train_idf[k2])
+			else:
+				data.append(1/float(train_descount2visitnum[k1] + train_finecount2visitnum[k1]) * train_idf[k2])
+			"""
 			data.append(1)
 			row.append(r)
 			col.append(k2)
 		answer.append(visitNumber2tripType[k1])
 		count += 1
 	# Create the COO-matrix
-	coo = coo_matrix((data,(row,col)), shape=(len(trainData), 7+69+5290))
+	coo = coo_matrix((data,(row,col)), shape=(len(trainData), 7+69+5354))
 	# Let Scipy convert COO to CSR format and return
 	return csr_matrix(coo), answer
 
 def test_json2matrix():
+	test_finecount2visitnum = loaddict('test_finecount2visitnum')
+	test_descount2visitnum = loaddict('test_descount2visitnum')
+	test_idf = loaddict('test_idf')
+
 	with open('walmart_data/test.json') as data_file:
 		testData = json.load(data_file)
 	
@@ -229,13 +333,29 @@ def test_json2matrix():
 	for k1, v1 in testData.items():
 		r = count
 		for k2, v2 in v1.items():
+			""" 1/0, weighting(0, 1, 1)
+			if int(k2) < 7:
+				data.append(float(1)*0)
+			elif int(k2) in range(7, 69+7):
+				data.append(float(1)*1)
+			else:
+				data.append(float(1)*1)
+			"""
+			""" tfidf
+			if int(k2) in range(7, 69+7):
+				data.append(float(v2)/float(test_descount2visitnum[k1]+test_finecount2visitnum[k1]) * test_idf[k2])
+			elif int(k2) >= 76:
+				data.append(float(v2)/float(test_descount2visitnum[k1]+test_finecount2visitnum[k1]) * test_idf[k2])
+			else:
+				data.append(1/float(test_descount2visitnum[k1]+test_finecount2visitnum[k1]) * test_idf[k2])
+			"""
 			data.append(1)
 			row.append(r)
 			col.append(k2)
 		id.append(k1)
 		count += 1
 	# Create the COO-matrix
-	coo = coo_matrix((data,(row,col)), shape=(len(testData), 7+69+5290))
+	coo = coo_matrix((data,(row,col)), shape=(len(testData), 7+69+5354))
 	# Let Scipy convert COO to CSR format and return
 	return csr_matrix(coo), id
 
@@ -244,22 +364,29 @@ def test_json2matrix():
 Unique Number
  
  - train_departmentDescription - 69
- - test_departmentDescription - 68 (all appear in train_departmentDescription)
+ - test_departmentDescription - 69 (all appear in train_departmentDescription)
 
  - train_tripType - 38
 
- - train_FinelineNumber - 5132
- - test_FinelineNumber - 5139
- - total FinelineNumber - 5290
+ - train_FinelineNumber - ?
+ - test_FinelineNumber - ?
+ - total FinelineNumber - 5354
 
 """
 if __name__ == '__main__':
 	#category_to_k_hot()
 	#csv2json()
+	#idf()
 
 	train_X, train_y = train_json2matrix()
 	test_X, test_id = test_json2matrix()
 	test_id = [int(d) for d in test_id]
+	print train_X.shape, len(train_y)
+	print test_X.shape, len(test_id)
+	pca = PCA(n_components=100)
+	print '--- pca starting ---'
+	train_X = pca.fit_transform(train_X.todense(), train_y)
+	test_X = pca.transform(test_X.todense())
 	print train_X.shape, len(train_y)
 	print test_X.shape, len(test_id)
 
