@@ -276,6 +276,19 @@ def csv2json():
 	print >> f, j
 	f.close()
 
+
+def buyNumEncoder(num):
+	if num <= 20:
+		return num
+	elif num <= 50:
+		return 20+1
+	elif num <= 100:
+		return 20+2
+	elif num <= 200:
+		return 20+3
+	else: return 20+4
+
+
 def train_json2matrix():
 	visitNumber2tripType = loaddict('visitNumber2tripType')
 	train_finecount2visitnum = loaddict('train_finecount2visitnum')
@@ -293,6 +306,9 @@ def train_json2matrix():
 	for k1, v1 in trainData.items():
 		r = count
 		returnOrNot = False
+		buyNum = 0
+		depCount = 0
+		lineCount = 0
 		for k2, v2 in v1.items():
 			""" 1/0, weighting(0, 1, 1)
 			if int(k2) < 7:
@@ -319,16 +335,31 @@ def train_json2matrix():
 			data.append(1)
 			row.append(r)
 			col.append(int(k2))
+			buyNum += abs(int(v2))
 			if int(v2) < 0:
 				returnOrNot = True
+			if int(k2) in range(7, 69+7):
+				depCount += 1
+			elif int(k2) >= 76:
+				lineCount += 1
 		if returnOrNot:
 			data.append(1)
 			row.append(r)
 			col.append(7+69+5354)
+		data.append(1)
+		row.append(r)
+		col.append(7+69+5354+1+buyNumEncoder(buyNum)-1)
+		data.append(1)
+		row.append(r)
+		col.append(7+69+5354+1+24+depCount-1)
+		data.append(1)
+		row.append(r)
+		col.append(7+69+5354+1+24+69+lineCount-1)
+
 		answer.append(visitNumber2tripType[k1])
 		count += 1
 	# Create the COO-matrix
-	coo = coo_matrix((data,(row,col)), shape=(len(trainData), 7+69+5354+1))
+	coo = coo_matrix((data,(row,col)), shape=(len(trainData), 7+69+5354+1+24+69+5354))
 	# Let Scipy convert COO to CSR format and return
 	return csr_matrix(coo), answer
 
@@ -348,6 +379,9 @@ def test_json2matrix():
 	for k1, v1 in testData.items():
 		r = count
 		returnOrNot = False
+		buyNum = 0
+		depCount = 0
+		lineCount = 0
 		for k2, v2 in v1.items():
 			""" 1/0, weighting(0, 1, 1)
 			if int(k2) < 7:
@@ -374,16 +408,31 @@ def test_json2matrix():
 			data.append(1)
 			row.append(r)
 			col.append(int(k2))
+			buyNum += abs(int(v2))
+			if int(k2) in range(7, 69+7):
+				depCount += 1
 			if int(v2) < 0:
 				returnOrNot = True
+			elif int(k2) >= 76:
+				lineCount += 1
 		if returnOrNot:
 			data.append(1)
 			row.append(r)
 			col.append(7+69+5354)
+		data.append(1)
+		row.append(r)
+		col.append(7+69+5354+1+buyNumEncoder(buyNum)-1)
+		data.append(1)
+		row.append(r)
+		col.append(7+69+5354+1+24+depCount-1)
+		data.append(1)
+		row.append(r)
+		col.append(7+69+5354+1+24+69+lineCount-1)
+
 		id.append(k1)
 		count += 1
 	# Create the COO-matrix
-	coo = coo_matrix((data,(row,col)), shape=(len(testData), 7+69+5354+1))
+	coo = coo_matrix((data,(row,col)), shape=(len(testData), 7+69+5354+1+24+69+5354))
 	# Let Scipy convert COO to CSR format and return
 	return csr_matrix(coo), id
 
@@ -406,9 +455,13 @@ if __name__ == '__main__':
 	#csv2json()
 	#idf()
 
+	print "--prepare training data--"
 	train_X, train_y = train_json2matrix()
+
+	print "--prepare testing data--"
 	test_X, test_id = test_json2matrix()
 	test_id = [int(d) for d in test_id]
+
 	print train_X.shape, len(train_y)
 	print test_X.shape, len(test_id)
 	
