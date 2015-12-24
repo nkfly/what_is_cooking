@@ -3,6 +3,7 @@ from sklearn.preprocessing import LabelEncoder
 from scipy.sparse import csr_matrix, coo_matrix
 from sklearn.linear_model import LogisticRegression
 from sklearn.decomposition import PCA, RandomizedPCA
+import xgboost as xgb
 
 
 #from keras.models import Sequential
@@ -464,6 +465,56 @@ if __name__ == '__main__':
 
 	print train_X.shape, len(train_y)
 	print test_X.shape, len(test_id)
+
+	tripType2class = loaddict('tripType_r')
+	
+	train_X = train_X
+	train_Y = [tripType2class[train_y[i]] for i in range(len(train_y))]
+
+	test_X = test_X
+	test_Y = [0 for i in range(test_X.shape[0])]
+
+
+	xg_train = xgb.DMatrix(train_X, label=train_Y)
+	xg_test = xgb.DMatrix(test_X, label=test_Y)
+
+
+	param = {}
+	# use softmax multi-class classification
+	param['objective'] = 'multi:softprob'
+	# scale weight of positive examples
+	param['eta'] = 0.1
+	param['max_depth'] = 10
+	param['silent'] = 0
+	param['nthread'] = 8
+	param['num_class'] = 38
+	param['eval_metric'] = 'mlogloss'
+
+
+	watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
+	num_round = 500
+	bst = xgb.train(param, xg_train, num_round, watchlist )
+
+	result = bst.predict( xg_test )
+
+	with open('walmart_data/tripType.json', 'r') as f:
+		class2tripType = json.load(f)
+	headerOrder = []
+
+	for i in range(38):
+		headerOrder.append('"TripType_' + class2tripType[str(i)] + '"')
+
+	
+	with open('walmart_data/answer2.csv', 'w') as w:
+		w.write('"VisitNumber",')
+		w.write(",".join(headerOrder) + '\n')
+		result = [b for a,b in sorted(zip(test_id, result))]
+		test_id = sorted(test_id)
+		for i in xrange(len(result)):
+			w.write(str(test_id[i])+',')
+			w.write(','.join([ str(r) for r in result[i]]))
+			w.write('\n')	
+
 	
 	"""
 	pca = PCA(n_components=500)
@@ -472,7 +523,6 @@ if __name__ == '__main__':
 	test_X = pca.transform(test_X.todense())
 	print train_X.shape, len(train_y)
 	print test_X.shape, len(test_id)
-	"""
 
 	clf = LogisticRegression()
 	clf.fit(train_X, train_y)
@@ -492,3 +542,4 @@ if __name__ == '__main__':
 			w.write(str(test_id[i]) + ',')
 			w.write(','.join([ str(r) for r in result[i]]))
 			w.write('\n')	
+	"""
