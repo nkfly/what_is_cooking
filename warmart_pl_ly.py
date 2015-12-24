@@ -15,7 +15,7 @@ import os.path
 import json
 import math
 from datetime import datetime
-
+import xgboost as xgb
 
 def read_data_by_column(filename):
 	tripType, visitNumber, weekDay, scanCount, departmentDescription, finelineNumber = [], [], [], [], [], []
@@ -330,7 +330,7 @@ def train_json2matrix():
 	# Create the COO-matrix
 	coo = coo_matrix((data,(row,col)), shape=(len(trainData), 7+69+5354+1))
 	# Let Scipy convert COO to CSR format and return
-	return csr_matrix(coo), answer
+	return coo.toarray(), answer
 
 def test_json2matrix():
 	test_finecount2visitnum = loaddict('test_finecount2visitnum')
@@ -385,7 +385,7 @@ def test_json2matrix():
 	# Create the COO-matrix
 	coo = coo_matrix((data,(row,col)), shape=(len(testData), 7+69+5354+1))
 	# Let Scipy convert COO to CSR format and return
-	return csr_matrix(coo), id
+	return coo.toarray(), id
 
 
 """
@@ -430,12 +430,11 @@ if __name__ == '__main__':
 	# print result[0]
 	# result = [ [b for a,b in sorted(zip(classes, r))] for r in result]
 	# print result[0]
-
 	train_X = train_X
-	train_Y = train_y
+	train_Y = [int(train_y[i]) for i in range(len(train_y))]
 
 	test_X = test_X
-	test_Y = [0 for i in range(len(test_X))]
+	test_Y = [0 for i in range(test_X.shape[0])]
 
 
 	xg_train = xgb.DMatrix(train_X, label=train_Y)
@@ -475,7 +474,5 @@ if __name__ == '__main__':
 		test_id = sorted(test_id)
 		for i in xrange(len(result)):
 			w.write(str(test_id[i]))
-			for i in range(len(result[i])):
-				w.write(',' + )
 			w.write(','.join([ str(r) for r in result[i]]))
 			w.write('\n')	
