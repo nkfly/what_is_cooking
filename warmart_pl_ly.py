@@ -460,22 +460,22 @@ if __name__ == '__main__':
 	num_round = 500
 	bst = xgb.train(param, xg_train, num_round, watchlist )
 
-	prediction = bst.predict( xg_test )
+	result = bst.predict( xg_test )
 
 	with open('walmart_data/tripType.json', 'r') as f:
 		class2tripType = json.load(f)
 	headerOrder = []
 
 	for i in range(38):
-		headerOrder.append("TripType_" + class2tripType[i + ""])
+		headerOrder.append('"TripType_' + class2tripType[str(i)] + '"')
 
 	
 	with open('walmart_data/answer.csv', 'w') as w:
 		w.write('"VisitNumber",')
-		w.weite(",".join(headerOrder) + '\n')
+		w.write(",".join(headerOrder) + '\n')
 		result = [b for a,b in sorted(zip(test_id, result))]
 		test_id = sorted(test_id)
 		for i in xrange(len(result)):
-			w.write(str(test_id[i]))
+			w.write(str(test_id[i])+',')
 			w.write(','.join([ str(r) for r in result[i]]))
 			w.write('\n')	
