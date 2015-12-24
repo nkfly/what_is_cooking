@@ -50,13 +50,13 @@ def category_to_k_hot():
 	test_finecount2visitnum = {}
 	for i in xrange(len(test_visitNumber)):
 		if test_visitNumber[i] not in test_descount2visitnum:
-			test_descount2visitnum[test_visitNumber[i]] = 1
+			test_descount2visitnum[test_visitNumber[i]] = abs(test_scanCount[i])
 		else:
-			test_descount2visitnum[test_visitNumber[i]] += 1
+			test_descount2visitnum[test_visitNumber[i]] += abs(test_scanCount[i])
 		if test_visitNumber[i] not in test_finecount2visitnum:
-			test_finecount2visitnum[test_visitNumber[i]] = 1
+			test_finecount2visitnum[test_visitNumber[i]] = abs(test_scanCount[i])
 		else:
-			test_finecount2visitnum[test_visitNumber[i]] += 1
+			test_finecount2visitnum[test_visitNumber[i]] += abs(test_scanCount[i])
 	j = json.dumps(test_descount2visitnum, indent=4)
 	f = open('walmart_data/test_descount2visitnum.json', 'w')
 	print >> f, j
@@ -70,13 +70,13 @@ def category_to_k_hot():
 	train_finecount2visitnum = {}
 	for i in xrange(len(train_visitNumber)):
 		if train_visitNumber[i] not in train_descount2visitnum:
-			train_descount2visitnum[train_visitNumber[i]] = 1
+			train_descount2visitnum[train_visitNumber[i]] = abs(train_scanCount[i])
 		else:
-			train_descount2visitnum[train_visitNumber[i]] += 1
+			train_descount2visitnum[train_visitNumber[i]] += abs(train_scanCount[i])
 		if train_visitNumber[i] not in train_finecount2visitnum:
-			train_finecount2visitnum[train_visitNumber[i]] = 1
+			train_finecount2visitnum[train_visitNumber[i]] = abs(train_scanCount[i])
 		else:
-			train_finecount2visitnum[train_visitNumber[i]] += 1
+			train_finecount2visitnum[train_visitNumber[i]] += abs(train_scanCount[i])
 	j = json.dumps(train_descount2visitnum, indent=4)
 	f = open('walmart_data/train_descount2visitnum.json', 'w')
 	print >> f, j
@@ -86,6 +86,7 @@ def category_to_k_hot():
 	print >> f, j
 	f.close()
 
+	"""
 	visitNumber2tripType = {}
 	print len(train_tripType), len(train_visitNumber)
 	if len(train_tripType) == len(train_visitNumber):
@@ -161,6 +162,7 @@ def category_to_k_hot():
 	f = open('walmart_data/tripType_r.json', 'w')
 	print >> f, j
 	f.close()
+	"""
 
 
 def loaddict(filename):
@@ -290,6 +292,7 @@ def train_json2matrix():
 	count = 0
 	for k1, v1 in trainData.items():
 		r = count
+		returnOrNot = False
 		for k2, v2 in v1.items():
 			""" 1/0, weighting(0, 1, 1)
 			if int(k2) < 7:
@@ -301,19 +304,31 @@ def train_json2matrix():
 			"""
 			""" tfidf
 			if int(k2) in range(7, 69+7):
-				data.append(float(v2)/float(train_descount2visitnum[k1] + train_finecount2visitnum[k1]) * train_idf[k2])
+				data.append(float(abs(v2))/float(train_descount2visitnum[k1] + train_finecount2visitnum[k1] + 1) * train_idf[k2])
 			elif int(k2) >= 76:
-				data.append(float(v2)/float(train_descount2visitnum[k1] + train_finecount2visitnum[k1]) * train_idf[k2])
+				data.append(float(abs(v2))/float(train_descount2visitnum[k1] + train_finecount2visitnum[k1] + 1) * train_idf[k2])
 			else:
-				data.append(1/float(train_descount2visitnum[k1] + train_finecount2visitnum[k1]) * train_idf[k2])
+				data.append(1/float(train_descount2visitnum[k1] + train_finecount2visitnum[k1] + 1) * train_idf[k2])
+			"""
+			"""tfidf + finelineNumber
+			if int(k2) >= 76:
+				data.append(float(v2)/float(train_finecount2visitnum[k1]) * train_idf[k2])
+				row.append(r)
+				col.append(int(k2)-76)
 			"""
 			data.append(1)
 			row.append(r)
-			col.append(k2)
+			col.append(int(k2))
+			if int(v2) < 0:
+				returnOrNot = True
+		if returnOrNot:
+			data.append(1)
+			row.append(r)
+			col.append(7+69+5354)
 		answer.append(visitNumber2tripType[k1])
 		count += 1
 	# Create the COO-matrix
-	coo = coo_matrix((data,(row,col)), shape=(len(trainData), 7+69+5354))
+	coo = coo_matrix((data,(row,col)), shape=(len(trainData), 7+69+5354+1))
 	# Let Scipy convert COO to CSR format and return
 	return csr_matrix(coo), answer
 
@@ -332,6 +347,7 @@ def test_json2matrix():
 	count = 0
 	for k1, v1 in testData.items():
 		r = count
+		returnOrNot = False
 		for k2, v2 in v1.items():
 			""" 1/0, weighting(0, 1, 1)
 			if int(k2) < 7:
@@ -341,21 +357,33 @@ def test_json2matrix():
 			else:
 				data.append(float(1)*1)
 			"""
-			""" tfidf
+			""" tf #idf
 			if int(k2) in range(7, 69+7):
-				data.append(float(v2)/float(test_descount2visitnum[k1]+test_finecount2visitnum[k1]) * test_idf[k2])
+				data.append(float(abs(v2))/float(test_descount2visitnum[k1]+test_finecount2visitnum[k1]+1) * test_idf[k2])
 			elif int(k2) >= 76:
-				data.append(float(v2)/float(test_descount2visitnum[k1]+test_finecount2visitnum[k1]) * test_idf[k2])
+				data.append(float(abs(v2))/float(test_descount2visitnum[k1]+test_finecount2visitnum[k1]+1) * test_idf[k2])
 			else:
-				data.append(1/float(test_descount2visitnum[k1]+test_finecount2visitnum[k1]) * test_idf[k2])
+				data.append(1/float(test_descount2visitnum[k1]+test_finecount2visitnum[k1]+1) * test_idf[k2])
+			"""
+			"""tfidf + finelineNumber
+			if int(k2) >= 76:
+				data.append(float(abs(v2))/float(test_finecount2visitnum[k1]) * test_idf[k2])
+				row.append(r)
+				col.append(int(k2)-76)
 			"""
 			data.append(1)
 			row.append(r)
-			col.append(k2)
+			col.append(int(k2))
+			if int(v2) < 0:
+				returnOrNot = True
+		if returnOrNot:
+			data.append(1)
+			row.append(r)
+			col.append(7+69+5354)
 		id.append(k1)
 		count += 1
 	# Create the COO-matrix
-	coo = coo_matrix((data,(row,col)), shape=(len(testData), 7+69+5354))
+	coo = coo_matrix((data,(row,col)), shape=(len(testData), 7+69+5354+1))
 	# Let Scipy convert COO to CSR format and return
 	return csr_matrix(coo), id
 
@@ -383,12 +411,15 @@ if __name__ == '__main__':
 	test_id = [int(d) for d in test_id]
 	print train_X.shape, len(train_y)
 	print test_X.shape, len(test_id)
-	pca = PCA(n_components=100)
+	
+	"""
+	pca = PCA(n_components=500)
 	print '--- pca starting ---'
 	train_X = pca.fit_transform(train_X.todense(), train_y)
 	test_X = pca.transform(test_X.todense())
 	print train_X.shape, len(train_y)
 	print test_X.shape, len(test_id)
+	"""
 
 	clf = LogisticRegression()
 	clf.fit(train_X, train_y)
