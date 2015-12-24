@@ -421,15 +421,16 @@ if __name__ == '__main__':
 	print test_X.shape, len(test_id)
 	"""
 
-	# clf = LogisticRegression()
-	# clf.fit(train_X, train_y)
-	# result = clf.predict_proba(test_X)
-	# classes = list(clf.classes_)
-	# classes = [int(c) for c in classes]
-	# print classes
-	# print result[0]
-	# result = [ [b for a,b in sorted(zip(classes, r))] for r in result]
-	# print result[0]
+	clf = LogisticRegression()
+	clf.fit(train_X, train_y)
+	result1 = clf.predict_proba(test_X)
+	classes = list(clf.classes_)
+	classes = [int(c) for c in classes]
+	
+	# result1 = [ [b for a,b in sorted(zip(classes, r))] for r in result]
+	print result1[0]
+
+
 	with open('walmart_data/tripType_r.json', 'r') as f:
 		tripType2class = json.load(f)
 	
@@ -460,7 +461,7 @@ if __name__ == '__main__':
 	num_round = 500
 	bst = xgb.train(param, xg_train, num_round, watchlist )
 
-	result = bst.predict( xg_test )
+	result2 = bst.predict( xg_test )
 
 	with open('walmart_data/tripType.json', 'r') as f:
 		class2tripType = json.load(f)
@@ -468,6 +469,8 @@ if __name__ == '__main__':
 
 	for i in range(38):
 		headerOrder.append('"TripType_' + class2tripType[str(i)] + '"')
+
+	result = [  (np.array(result1[i]) + np.array(result2[i]))/2  for i in range(len(result1)) ]
 
 	
 	with open('walmart_data/answer.csv', 'w') as w:
