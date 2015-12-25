@@ -360,20 +360,20 @@ def train_json2matrix():
 			data.append(1)
 			row.append(r)
 			col.append(7+69+5354)
-		data.append(1)
+		data.append(buyNum)
 		row.append(r)
-		col.append(7+69+5354+1+buyNumEncoder(buyNum)-1)
-		data.append(1)
+		col.append(7+69+5354+1+1-1)
+		data.append(entropy(depEntropy, depCount))
 		row.append(r)
-		col.append(7+69+5354+1+24+entropy(depEntropy, depCount)-1)
-		data.append(1)
+		col.append(7+69+5354+1+1+1-1)
+		data.append(lineCount)
 		row.append(r)
-		col.append(7+69+5354+1+24+69+lineCount-1)
+		col.append(7+69+5354+1+1+1+1-1)
 
 		answer.append(visitNumber2tripType[k1])
 		count += 1
 	# Create the COO-matrix
-	coo = coo_matrix((data,(row,col)), shape=(len(trainData), 7+69+5354+1+24+69+5354))
+	coo = coo_matrix((data,(row,col)), shape=(len(trainData), 7+69+5354+1+1+1+1))
 	# Let Scipy convert COO to CSR format and return
 	return csr_matrix(coo), answer
 
@@ -438,20 +438,21 @@ def test_json2matrix():
 			data.append(1)
 			row.append(r)
 			col.append(7+69+5354)
-		data.append(1)
+		data.append(buyNum)
 		row.append(r)
-		col.append(7+69+5354+1+buyNumEncoder(buyNum)-1)
-		data.append(1)
+		col.append(7+69+5354+1+1-1)
+		data.append(entropy(depEntropy, depCount))
 		row.append(r)
-		col.append(7+69+5354+1+24+entropy(depEntropy, depCount)-1)
-		data.append(1)
+		col.append(7+69+5354+1+1+1-1)
+		data.append(lineCount)
 		row.append(r)
-		col.append(7+69+5354+1+24+69+lineCount-1)
+		col.append(7+69+5354+1+1+1+1-1)
+		
 
 		id.append(k1)
 		count += 1
 	# Create the COO-matrix
-	coo = coo_matrix((data,(row,col)), shape=(len(testData), 7+69+5354+1+24+69+5354))
+	coo = coo_matrix((data,(row,col)), shape=(len(testData), 7+69+5354+1+1+1+1))
 	# Let Scipy convert COO to CSR format and return
 	return csr_matrix(coo), id
 
