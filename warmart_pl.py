@@ -344,23 +344,27 @@ def train_json2matrix():
 			elif int(k2) >= 76:
 				lineCount += 1
 		if returnOrNot:
-			data.append(1)
+			data.append(2)
 			row.append(r)
 			col.append(7+69+5354)
+		else:
+			data.append(2)
+			row.append(r)
+			col.append(7+69+5354+1)
+		data.append(2)
+		row.append(r)
+		col.append(7+69+5354+2+buyNumEncoder(buyNum)-1)
 		data.append(1)
 		row.append(r)
-		col.append(7+69+5354+1+buyNumEncoder(buyNum)-1)
+		col.append(7+69+5354+2+24+depCount-1)
 		data.append(1)
 		row.append(r)
-		col.append(7+69+5354+1+24+depCount-1)
-		data.append(1)
-		row.append(r)
-		col.append(7+69+5354+1+24+69+lineCount-1)
+		col.append(7+69+5354+2+24+69+lineCount-1)
 
 		answer.append(visitNumber2tripType[k1])
 		count += 1
 	# Create the COO-matrix
-	coo = coo_matrix((data,(row,col)), shape=(len(trainData), 7+69+5354+1+24+69+5354))
+	coo = coo_matrix((data,(row,col)), shape=(len(trainData), 7+69+5354+2+24+69+5354))
 	# Let Scipy convert COO to CSR format and return
 	return csr_matrix(coo), answer
 
@@ -417,23 +421,27 @@ def test_json2matrix():
 			elif int(k2) >= 76:
 				lineCount += 1
 		if returnOrNot:
-			data.append(1)
+			data.append(2)
 			row.append(r)
 			col.append(7+69+5354)
+		else:
+			data.append(2)
+			row.append(r)
+			col.append(7+69+5354+1)
+		data.append(2)
+		row.append(r)
+		col.append(7+69+5354+2+buyNumEncoder(buyNum)-1)
 		data.append(1)
 		row.append(r)
-		col.append(7+69+5354+1+buyNumEncoder(buyNum)-1)
+		col.append(7+69+5354+2+24+depCount-1)
 		data.append(1)
 		row.append(r)
-		col.append(7+69+5354+1+24+depCount-1)
-		data.append(1)
-		row.append(r)
-		col.append(7+69+5354+1+24+69+lineCount-1)
+		col.append(7+69+5354+2+24+69+lineCount-1)
 
 		id.append(k1)
 		count += 1
 	# Create the COO-matrix
-	coo = coo_matrix((data,(row,col)), shape=(len(testData), 7+69+5354+1+24+69+5354))
+	coo = coo_matrix((data,(row,col)), shape=(len(testData), 7+69+5354+2+24+69+5354))
 	# Let Scipy convert COO to CSR format and return
 	return csr_matrix(coo), id
 
@@ -515,7 +523,6 @@ if __name__ == '__main__':
 			w.write(','.join([ str(r) for r in result[i]]))
 			w.write('\n')	
 
-	
 	"""
 	pca = PCA(n_components=500)
 	print '--- pca starting ---'
@@ -523,6 +530,7 @@ if __name__ == '__main__':
 	test_X = pca.transform(test_X.todense())
 	print train_X.shape, len(train_y)
 	print test_X.shape, len(test_id)
+	
 
 	clf = LogisticRegression()
 	clf.fit(train_X, train_y)
