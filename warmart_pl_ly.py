@@ -365,7 +365,7 @@ def train_json2matrix():
 		col.append(7+69+5354+1+buyNumEncoder(buyNum)-1)
 		data.append(1)
 		row.append(r)
-		col.append(7+69+5354+1+24+entro(depEntropy, depCount)-1)
+		col.append(7+69+5354+1+24+entropy(depEntropy, depCount)-1)
 		data.append(1)
 		row.append(r)
 		col.append(7+69+5354+1+24+69+lineCount-1)
@@ -395,6 +395,7 @@ def test_json2matrix():
 		returnOrNot = False
 		buyNum = 0
 		depCount = 0
+		depEntropy = {}
 		lineCount = 0
 		for k2, v2 in v1.items():
 			""" 1/0, weighting(0, 1, 1)
@@ -442,7 +443,7 @@ def test_json2matrix():
 		col.append(7+69+5354+1+buyNumEncoder(buyNum)-1)
 		data.append(1)
 		row.append(r)
-		col.append(7+69+5354+1+24+entro(depEntropy, depCount)-1)
+		col.append(7+69+5354+1+24+entropy(depEntropy, depCount)-1)
 		data.append(1)
 		row.append(r)
 		col.append(7+69+5354+1+24+69+lineCount-1)
