@@ -3,6 +3,7 @@ from sklearn.preprocessing import LabelEncoder
 from scipy.sparse import csr_matrix, coo_matrix
 from sklearn.linear_model import LogisticRegression
 from sklearn.decomposition import PCA, RandomizedPCA
+import xgboost as xgb
 
 
 #from keras.models import Sequential
@@ -15,7 +16,7 @@ import os.path
 import json
 import math
 from datetime import datetime
-import xgboost as xgb
+
 
 def read_data_by_column(filename):
 	tripType, visitNumber, weekDay, scanCount, departmentDescription, finelineNumber = [], [], [], [], [], []
@@ -276,6 +277,27 @@ def csv2json():
 	print >> f, j
 	f.close()
 
+
+def buyNumEncoder(num):
+	if num <= 20:
+		return num
+	elif num <= 50:
+		return 20+1
+	elif num <= 100:
+		return 20+2
+	elif num <= 200:
+		return 20+3
+	else: return 20+4
+
+
+def entropy(depEntropy, depCount):
+	entro = 0.0
+	for dimen in depEntropy:
+		p = float(depEntropy[dimen]) / depCount
+		entro += -p * math.log(p)
+	return entro
+
+
 def train_json2matrix():
 	visitNumber2tripType = loaddict('visitNumber2tripType')
 	train_finecount2visitnum = loaddict('train_finecount2visitnum')
@@ -293,6 +315,10 @@ def train_json2matrix():
 	for k1, v1 in trainData.items():
 		r = count
 		returnOrNot = False
+		buyNum = 0
+		depEntropy = {}
+		depCount = 0
+		lineCount = 0
 		for k2, v2 in v1.items():
 			""" 1/0, weighting(0, 1, 1)
 			if int(k2) < 7:
@@ -319,18 +345,37 @@ def train_json2matrix():
 			data.append(1)
 			row.append(r)
 			col.append(int(k2))
+			buyNum += abs(int(v2))
 			if int(v2) < 0:
 				returnOrNot = True
+			if int(k2) in range(7, 69+7):
+				if int(k2) not in depEntropy:
+					depEntropy[int(k2)] = 1
+				else:
+					depEntropy[int(k2)] += 1
+				depCount += 1
+			elif int(k2) >= 76:
+				lineCount += 1
 		if returnOrNot:
 			data.append(1)
 			row.append(r)
 			col.append(7+69+5354)
+		data.append(1)
+		row.append(r)
+		col.append(7+69+5354+1+buyNumEncoder(buyNum)-1)
+		data.append(1)
+		row.append(r)
+		col.append(7+69+5354+1+24+entro(depEntropy, depCount)-1)
+		data.append(1)
+		row.append(r)
+		col.append(7+69+5354+1+24+69+lineCount-1)
+
 		answer.append(visitNumber2tripType[k1])
 		count += 1
 	# Create the COO-matrix
-	coo = coo_matrix((data,(row,col)), shape=(len(trainData), 7+69+5354+1))
+	coo = coo_matrix((data,(row,col)), shape=(len(trainData), 7+69+5354+1+24+69+5354))
 	# Let Scipy convert COO to CSR format and return
-	return coo.toarray(), answer
+	return csr_matrix(coo), answer
 
 def test_json2matrix():
 	test_finecount2visitnum = loaddict('test_finecount2visitnum')
@@ -348,6 +393,9 @@ def test_json2matrix():
 	for k1, v1 in testData.items():
 		r = count
 		returnOrNot = False
+		buyNum = 0
+		depCount = 0
+		lineCount = 0
 		for k2, v2 in v1.items():
 			""" 1/0, weighting(0, 1, 1)
 			if int(k2) < 7:
@@ -374,18 +422,37 @@ def test_json2matrix():
 			data.append(1)
 			row.append(r)
 			col.append(int(k2))
+			buyNum += abs(int(v2))
+			if int(k2) in range(7, 69+7):
+				if int(k2) not in depEntropy:
+					depEntropy[int(k2)] = 1
+				else:
+					depEntropy[int(k2)] += 1
+				depCount += 1
 			if int(v2) < 0:
 				returnOrNot = True
+			elif int(k2) >= 76:
+				lineCount += 1
 		if returnOrNot:
 			data.append(1)
 			row.append(r)
 			col.append(7+69+5354)
+		data.append(1)
+		row.append(r)
+		col.append(7+69+5354+1+buyNumEncoder(buyNum)-1)
+		data.append(1)
+		row.append(r)
+		col.append(7+69+5354+1+24+entro(depEntropy, depCount)-1)
+		data.append(1)
+		row.append(r)
+		col.append(7+69+5354+1+24+69+lineCount-1)
+
 		id.append(k1)
 		count += 1
 	# Create the COO-matrix
-	coo = coo_matrix((data,(row,col)), shape=(len(testData), 7+69+5354+1))
+	coo = coo_matrix((data,(row,col)), shape=(len(testData), 7+69+5354+1+24+69+5354))
 	# Let Scipy convert COO to CSR format and return
-	return coo.toarray(), id
+	return csr_matrix(coo), id
 
 
 """
@@ -406,33 +473,17 @@ if __name__ == '__main__':
 	#csv2json()
 	#idf()
 
+	print "--prepare training data--"
 	train_X, train_y = train_json2matrix()
+
+	print "--prepare testing data--"
 	test_X, test_id = test_json2matrix()
 	test_id = [int(d) for d in test_id]
+
 	print train_X.shape, len(train_y)
 	print test_X.shape, len(test_id)
-	
-	"""
-	pca = PCA(n_components=500)
-	print '--- pca starting ---'
-	train_X = pca.fit_transform(train_X.todense(), train_y)
-	test_X = pca.transform(test_X.todense())
-	print train_X.shape, len(train_y)
-	print test_X.shape, len(test_id)
-	"""
 
-	clf = LogisticRegression()
-	clf.fit(train_X, train_y)
-	result1 = clf.predict_proba(test_X)
-	classes = list(clf.classes_)
-	classes = [int(c) for c in classes]
-	
-	# result1 = [ [b for a,b in sorted(zip(classes, r))] for r in result]
-	print result1[0]
-
-
-	with open('walmart_data/tripType_r.json', 'r') as f:
-		tripType2class = json.load(f)
+	tripType2class = loaddict('tripType_r')
 	
 	train_X = train_X
 	train_Y = [tripType2class[train_y[i]] for i in range(len(train_y))]
@@ -461,7 +512,7 @@ if __name__ == '__main__':
 	num_round = 500
 	bst = xgb.train(param, xg_train, num_round, watchlist )
 
-	result2 = bst.predict( xg_test )
+	result = bst.predict( xg_test )
 
 	with open('walmart_data/tripType.json', 'r') as f:
 		class2tripType = json.load(f)
@@ -469,8 +520,6 @@ if __name__ == '__main__':
 
 	for i in range(38):
 		headerOrder.append('"TripType_' + class2tripType[str(i)] + '"')
-
-	result = [  (np.array(result1[i]) + np.array(result2[i]))/2  for i in range(len(result1)) ]
 
 	
 	with open('walmart_data/answer.csv', 'w') as w:
@@ -482,3 +531,32 @@ if __name__ == '__main__':
 			w.write(str(test_id[i])+',')
 			w.write(','.join([ str(r) for r in result[i]]))
 			w.write('\n')	
+
+	
+	"""
+	pca = PCA(n_components=500)
+	print '--- pca starting ---'
+	train_X = pca.fit_transform(train_X.todense(), train_y)
+	test_X = pca.transform(test_X.todense())
+	print train_X.shape, len(train_y)
+	print test_X.shape, len(test_id)
+
+	clf = LogisticRegression()
+	clf.fit(train_X, train_y)
+	result = clf.predict_proba(test_X)
+	classes = list(clf.classes_)
+	classes = [int(c) for c in classes]
+	print classes
+	print result[0]
+	result = [ [b for a,b in sorted(zip(classes, r))] for r in result]
+	print result[0]
+	
+	with open('walmart_data/answer.csv', 'w') as w:
+		w.write('"VisitNumber","TripType_3","TripType_4","TripType_5","TripType_6","TripType_7","TripType_8","TripType_9","TripType_12","TripType_14","TripType_15","TripType_18","TripType_19","TripType_20","TripType_21","TripType_22","TripType_23","TripType_24","TripType_25","TripType_26","TripType_27","TripType_28","TripType_29","TripType_30","TripType_31","TripType_32","TripType_33","TripType_34","TripType_35","TripType_36","TripType_37","TripType_38","TripType_39","TripType_40","TripType_41","TripType_42","TripType_43","TripType_44","TripType_999"\n')
+		result = [b for a,b in sorted(zip(test_id, result))]
+		test_id = sorted(test_id)
+		for i in xrange(len(result)):
+			w.write(str(test_id[i]) + ',')
+			w.write(','.join([ str(r) for r in result[i]]))
+			w.write('\n')	
+	"""
