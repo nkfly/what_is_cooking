@@ -513,7 +513,7 @@ if __name__ == '__main__':
 		headerOrder.append('"TripType_' + class2tripType[str(i)] + '"')
 
 	
-	with open('walmart_data/answer2.csv', 'w') as w:
+	with open('walmart_data/planswer2.csv', 'w') as w:
 		w.write('"VisitNumber",')
 		w.write(",".join(headerOrder) + '\n')
 		result = [b for a,b in sorted(zip(test_id, result))]
